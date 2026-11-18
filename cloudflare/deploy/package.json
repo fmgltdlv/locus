@@ -23,7 +23,7 @@
     "fflate": "^0.8.3",
     "hono": "^4.12.25",
     "jose": "^5.9.6",
-    "set-cookie-parser": "^3.1.0"
+    "set-cookie-parser": "^3.2.2"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20250129.0",
