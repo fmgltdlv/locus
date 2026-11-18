@@ -19,7 +19,7 @@
   "dependencies": {
     "@turf/turf": "^7.3.5",
     "bcryptjs": "^2.4.3",
-    "fast-xml-parser": "^5.7.1",
+    "fast-xml-parser": "^5.12.1",
     "fflate": "^0.8.3",
     "hono": "^4.12.25",
     "jose": "^5.9.6",
