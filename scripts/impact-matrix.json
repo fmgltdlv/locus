@@ -1,0 +1,883 @@
+{
+  "version": 1,
+  "description": "Sibling blast-radius matrix for high-risk paths. Consumed by scripts/check-impact-diff.mjs.",
+  "entries": [
+    {
+      "id": "submit-jobs-workflow",
+      "risk": "high",
+      "paths": [
+        "cloudflare/deploy/src/lib/submitJobProcessor.ts",
+        "cloudflare/deploy/src/lib/ngenOperatorSubmit.cjs",
+        "cloudflare/deploy/src/lib/usanSubmitIdempotency.ts",
+        "cloudflare/deploy/src/routes/tickets/submitJobs.ts",
+        "cloudflare/deploy/src/workflows/submitJobWorkflow.ts",
+        "cloudflare/deploy/src/index.ts",
+        "cloudflare/deploy/wrangler.toml",
+        "cloudflare/deploy/migrations/0067_ticket_submit_job_item_dismissals.sql",
+        "frontend/js/tickets/submitJobPoller.js",
+        "frontend/js/tickets/submitFailureMapPreview.js"
+      ],
+      "siblings": [
+        "POST /tickets/submit-jobs",
+        "GET /tickets/submit-jobs/active",
+        "GET /tickets/submit-jobs/failed",
+        "POST /tickets/submit-jobs/failures/dismiss",
+        "GET /tickets/submit-jobs/:id",
+        "POST /tickets/submit-jobs/:id/resume",
+        "POST /tickets/submit-jobs/:id/retry",
+        "SubmitJobWorkflow (one step per item)",
+        "Submit failure map preview",
+        "create/renew/remark/amendment/clone_new/operator submit jobs (exposed/damage/follow_up/disputed/no_response)"
+      ],
+      "checks": [
+        "npm run typecheck",
+        "npm run build:ui",
+        "npm run typecheck"
+      ],
+      "smokes": [],
+      "notes": "D1 migration 0067 dismissals. Retention 5 days. No orphan auto-claim."
+    },
+    {
+      "id": "documentation-feed",
+      "risk": "high",
+      "paths": [
+        "cloudflare/deploy/src/routes/feed.ts",
+        "cloudflare/deploy/src/routes/serviceRequests.ts",
+        "cloudflare/deploy/src/lib/syncMaxTierServiceRequest.cjs",
+        "cloudflare/deploy/src/lib/feedServiceRequestNote.cjs",
+        "cloudflare/deploy/src/lib/feedScan.cjs",
+        "cloudflare/deploy/src/lib/ticketPersist.cjs",
+        "cloudflare/deploy/src/lib/subscriptionTier.ts",
+        "cloudflare/deploy/src/routes/tickets/listRoutes.ts",
+        "frontend/js/ticketHub/ticket-hub-feed.js",
+        "frontend/js/ticketHub/ticket-hub-table-window.js",
+        "frontend/js/tickets/tickets-load.js",
+        "frontend/js/orgSelector.js",
+        "frontend/js/ui.js",
+        "frontend/js/feedMapLayer.js",
+        "frontend/js/mapTopLeftControls.js"
+      ],
+      "siblings": [
+        "GET/POST /api/feed/*",
+        "POST /api/service-requests (ticket-linked incomplete)",
+        "GET /tickets (feed org returns [])",
+        "ticketPersist → syncMaxTierServiceRequest",
+        "Admin subscription tier Max",
+        "org circle feed open-count badge",
+        "Ticket Hub feed mode",
+        "map #mapStatusFiltersStats on contractor→feed org switch",
+        "loadTicketsForCurrentOrg feed early-return + renderHubStats",
+        "mobile #mapTopLeftActiveStatBubble Feed open-count + tap opens hub"
+      ],
+      "checks": [
+        "npm run typecheck",
+        "npm run build:ui",
+        "npm run typecheck"
+      ],
+      "smokes": [],
+      "notes": "No D1 migration. Max = Enhanced + auto SR. Feed Ready/Not ready ignores photos and ack-blocking codes."
+    },
+    {
+      "id": "tickets-refresh",
+      "risk": "high",
+      "paths": [
+        "cloudflare/deploy/src/routes/tickets/refresh.ts",
+        "cloudflare/deploy/src/routes/tickets/refreshRoutes.ts",
+        "cloudflare/deploy/src/routes/tickets/refreshNgen.ts",
+        "cloudflare/deploy/src/routes/tickets/refreshFanout.ts",
+        "cloudflare/deploy/src/lib/ticketBaseGeometry.cjs",
+        "cloudflare/deploy/src/lib/ticketPersist.cjs"
+      ],
+      "siblings": [
+        "POST /tickets/refresh",
+        "POST /tickets/polygons",
+        "POST /tickets/polygon-backfill",
+        "fanoutRefreshedTicketToSiblingRows (sibling fanout)",
+        "runNgenEnquiryRefreshIfConfigured / nGen merge",
+        "mergeNgenNotificationHistoryIntoTicketData"
+      ],
+      "checks": [
+        "npm run typecheck",
+        "npm run check:route-undef",
+        "npm run build:ui"
+      ],
+      "smokes": [
+        "npm run typecheck"
+      ],
+      "notes": "Phase 1 split: barrel refresh.ts re-exports; routes in refreshRoutes, nGen helpers in refreshNgen, fanout in refreshFanout. Re-scan every handler after import edits."
+    },
+    {
+      "id": "tickets-list-lean-cache",
+      "risk": "high",
+      "paths": [
+        "cloudflare/deploy/src/routes/tickets/listRoutes.ts",
+        "cloudflare/deploy/src/lib/ticketListCache.ts"
+      ],
+      "siblings": [
+        "GET /tickets summary+activeOnly lean + APP_KV snapshot",
+        "GET /tickets summary (non-active)",
+        "GET /tickets expiredOnly hub list",
+        "GET /tickets full (non-summary)",
+        "POST /tickets save invalidate lean cache",
+        "hub-job-fields"
+      ],
+      "checks": [
+        "npm run typecheck",
+        "npm run check:route-undef",
+        "npm run typecheck"
+      ],
+      "smokes": [],
+      "notes": "Lean list omits polygons; invalidateOrgActiveTicketListCache must not clear per-base polygon KV keys. Cache hit always restamps computedWorkflowStatus from the live ack map (not only when expiringSoonDays changes). Full-range poll always invalidates hub lean list; poll/import writes invalidate every org touched; nuke-tickets clears lean + search_fp_map. PUT/DELETE acknowledge-workflow await lean-cache invalidate."
+    },
+    {
+      "id": "tickets-poll-helpers",
+      "risk": "high",
+      "paths": [
+        "cloudflare/deploy/src/routes/tickets/pollHelpers.ts"
+      ],
+      "siblings": [
+        "USAN poll / import loop (via pollRoutes)",
+        "POSR import (importOneTicketFromNvPublicApis)",
+        "nGen-first import (importOneTicketPacPollNgenFirst)",
+        "structured row persist / operator response refresh",
+        "fingerprint skip helpers (allHubFingerprintsMatch / importLoopWouldSkipAllByFingerprint)"
+      ],
+      "checks": [
+        "npm run typecheck",
+        "npm run check:route-undef",
+        "npm run typecheck"
+      ],
+      "smokes": [
+        "npm run typecheck"
+      ],
+      "notes": "Shared by pollRoutes, refresh, and import paths. Grep repo-wide for each changed export. userCanImportTicketToOrg allows tech only for poll hub org via allowTechForOrgId; POST /import still uses assertNotTechWrite."
+    },
+    {
+      "id": "tickets-poll-routes",
+      "risk": "high",
+      "paths": [
+        "cloudflare/deploy/src/routes/tickets/pollRoutes.ts"
+      ],
+      "siblings": [
+        "POST /tickets/import",
+        "runPacwebPollCore (scheduled + on-demand poll)",
+        "pollHelpers consumers"
+      ],
+      "checks": [
+        "npm run typecheck",
+        "npm run check:route-undef"
+      ],
+      "smokes": [
+        "npm run typecheck"
+      ],
+      "notes": "Multi-concern module — re-scan after import edits. Tech may trigger USAN list poll for hub org only; secondary org poll writes stay tech-blocked; explicit /import remains tech-blocked. POST /import invalidates lean list when tickets imported."
+    },
+    {
+      "id": "tickets-detail",
+      "risk": "high",
+      "paths": [
+        "cloudflare/deploy/src/routes/tickets/detailRoutes.ts",
+        "cloudflare/deploy/src/routes/tickets/detailShared.ts",
+        "cloudflare/deploy/src/routes/tickets/detailNgenRoutes.ts",
+        "cloudflare/deploy/src/routes/tickets/detailViewLogRoutes.ts",
+        "cloudflare/deploy/src/routes/tickets/detailNotesRoutes.ts",
+        "cloudflare/deploy/src/routes/tickets/detailProjectsComplianceRoutes.ts",
+        "cloudflare/deploy/src/routes/tickets/detailCoreRoutes.ts",
+        "cloudflare/deploy/src/routes/tickets/detailWorkflowRoutes.ts",
+        "cloudflare/deploy/src/lib/workflowAckCompliance.cjs"
+      ],
+      "siblings": [
+        "GET/PATCH/DELETE /tickets/:ticketNumber",
+        "POST /tickets/:ticketNumber/ngen-notification-history",
+        "GET /tickets/:ticketNumber/usan-document-pack",
+        "notes / view-log / projects / job-compliance",
+        "GET /tickets/db-detail",
+        "acknowledge-workflow"
+      ],
+      "checks": [
+        "npm run typecheck",
+        "npm run check:route-undef"
+      ],
+      "smokes": [
+        "npm run typecheck"
+      ],
+      "notes": "Phase 2 split: thin detailRoutes orchestrator preserves register order (ngen → view-log → notes → projects → PATCH → workflow → db-detail/GET/DELETE)."
+    },
+    {
+      "id": "tickets-renewal-writes",
+      "risk": "high",
+      "paths": [
+        "cloudflare/deploy/src/routes/tickets/renewalAndWrites.ts"
+      ],
+      "siblings": [
+        "POST /tickets/renew (+ /renew/preview)",
+        "POST /tickets/remark",
+        "POST /tickets/amendment",
+        "POST /tickets/create",
+        "POST /tickets/exposed|damage|follow-up|disputed|no-response",
+        "POST /tickets/reverse-geocode",
+        "POST /tickets/geo-search-street",
+        "POST /tickets/computed-dates-new",
+        "POST /tickets/clone-wizard-prefill"
+      ],
+      "checks": [
+        "npm run typecheck",
+        "npm run check:route-undef"
+      ],
+      "smokes": [],
+      "notes": "USAN write flows share imports — one removed import can break an unrelated submit type."
+    },
+    {
+      "id": "tickets-job-projects",
+      "risk": "medium",
+      "paths": [
+        "cloudflare/deploy/src/routes/tickets/jobProjectRoutes.ts"
+      ],
+      "siblings": [
+        "GET/POST /tickets/job-projects",
+        "GET /tickets/job-projects/assignment-index",
+        "GET/PUT /tickets/job-projects/:jobNameKey/assignees",
+        "compliance / share-link / ticket membership routes"
+      ],
+      "checks": [
+        "npm run typecheck",
+        "npm run check:route-undef",
+        "npm run check:migrations"
+      ],
+      "smokes": [
+        "npm run typecheck",
+        "npm run typecheck"
+      ],
+      "notes": "Project assignees (job_project_assignees) replace ticket_assignees for tech UI; hub Assigned-to-me uses GET assignment-index (open projects only); tech list is filtered to assigned open projects; share-link GET 403 for tech."
+    },
+    {
+      "id": "ticket-row-helpers",
+      "risk": "high",
+      "paths": [
+        "cloudflare/deploy/src/routes/ticketRowHelpers.ts"
+      ],
+      "siblings": [
+        "buildTicketResponseForClient",
+        "findFullTicketRowForOrg / findTicketSiblingRowsByBase",
+        "assertNotTechWrite / tech visibility helpers",
+        "All ticket route modules that import this file"
+      ],
+      "checks": [
+        "npm run typecheck",
+        "npm run check:route-undef",
+        "npm run build:ui"
+      ],
+      "smokes": [],
+      "notes": "Shared across almost every ticket route — grep all importers after signature changes."
+    },
+    {
+      "id": "ticket-persist",
+      "risk": "high",
+      "paths": [
+        "cloudflare/deploy/src/lib/ticketPersist.cjs"
+      ],
+      "siblings": [
+        "persistTicketRowAfterDataChange callers (refresh, poll, detail writes)"
+      ],
+      "checks": [
+        "npm run typecheck",
+        "npm run check:route-undef"
+      ],
+      "smokes": [
+        "npm run typecheck"
+      ],
+      "notes": "CJS — not covered by Worker tsc the same way as TS modules."
+    },
+    {
+      "id": "frontend-table-actions",
+      "risk": "high",
+      "paths": [
+        "frontend/js/table/tablePhotoActions.js",
+        "frontend/js/table/tableDocumentActions.js",
+        "frontend/js/table/tableEventActions.js",
+        "frontend/js/table/tableServiceRequestActions.js",
+        "frontend/js/table/tableActions.js"
+      ],
+      "siblings": [
+        "CRUD paths for tickets / photos / reports / annotations",
+        "Manual photo GPS edit/tag/remove (syncPhotoMapAfterGpsChange)",
+        "Document viewer / annotate mode / fullscreen",
+        "Reported events modal + location drawing",
+        "Feedback + service request / site documentation",
+        "Org-scoped localStorage + store ordering assumptions"
+      ],
+      "checks": [
+        "npm run build:ui"
+      ],
+      "smokes": [],
+      "notes": "Phase F4: entity split + thin barrel. Bundle order photo→document→event→service→tableActions before tableDelegation."
+    },
+    {
+      "id": "frontend-tickets-operations",
+      "risk": "high",
+      "paths": [
+        "frontend/js/tickets/tickets-org-cache.js",
+        "frontend/js/tickets/tickets-load.js",
+        "frontend/js/tickets/tickets-photo-views.js",
+        "frontend/js/tickets/tickets-operations-photos.js"
+      ],
+      "siblings": [
+        "delete ticket (dev)",
+        "refreshTicketFrom811 + org ticket cache / hub slices",
+        "loadTicketsForCurrentOrg + map zoom-to-tickets",
+        "Ticket↔photo views / popup photo lists / recent-window filter"
+      ],
+      "checks": [
+        "npm run build:ui"
+      ],
+      "smokes": [],
+      "notes": "Phase F1 split; operator/photo overrides removed (0069). Bundle order in build.mjs: org-cache → load → photo-views → operations-photos → workflow-ack."
+    },
+    {
+      "id": "frontend-tickets-popup-assignees",
+      "risk": "high",
+      "paths": [
+        "frontend/js/tickets/tickets-popup.js",
+        "frontend/js/tickets/tickets-assignees.js",
+        "frontend/js/tickets/tickets-popup-assignees.js"
+      ],
+      "siblings": [
+        "Map ticket popup (showTicketPopup) + responses/patch/resize",
+        "Assignees modal open/save/dirty checklist",
+        "Hub/popup assignee entry points"
+      ],
+      "checks": [
+        "npm run build:ui"
+      ],
+      "smokes": [],
+      "notes": "Phase F2 split. Bundle order: tickets-popup.js then tickets-assignees.js then thin placeholder."
+    },
+    {
+      "id": "frontend-documents",
+      "risk": "medium",
+      "paths": [
+        "frontend/js/documents.js"
+      ],
+      "siblings": [
+        "Document upload / delete / rename",
+        "Set/remove document location (PATCH metadata.geometry)",
+        "Manage Data documents load/sync (localStorage + server)"
+      ],
+      "checks": [
+        "npm run build:ui"
+      ],
+      "smokes": [],
+      "notes": "Location is attribute-only (no map overlay). Persist via PATCH /data/media/:id geometry."
+    },
+    {
+      "id": "frontend-photo-map-gps",
+      "risk": "high",
+      "paths": [
+        "frontend/js/photos/photos-core.js",
+        "frontend/js/photos/photos-map-sync.js",
+        "frontend/js/photos/photos-manage-data.js",
+        "frontend/js/photos/photos-media-urls.js",
+        "frontend/js/photos/photos-layer.js",
+        "frontend/js/photos/photoMapLoader.js",
+        "frontend/js/photos/photos-exports.js"
+      ],
+      "siblings": [
+        "Viewport photo map fetch/render",
+        "Manual GPS place/move/remove (fileId vs map-photo id)",
+        "Upload path invalidatePhotoMapCache + scheduleFetch",
+        "Manage Data photo sync / savePhotos",
+        "Photos layer init / clusters / org reload"
+      ],
+      "checks": [
+        "npm run build:ui"
+      ],
+      "smokes": [],
+      "notes": "Phase F5 split. Bundle order: photos-core → map-sync → manage-data → media-urls → layer → tags… → photos-exports. Manage Data photos use photo-server-{id}; map pins use map-photo-{fileId}."
+    },
+    {
+      "id": "frontend-ticket-status",
+      "risk": "medium",
+      "paths": [
+        "frontend/js/tickets/ticket-status.js",
+        "frontend/js/ticketImporter.js"
+      ],
+      "siblings": [
+        "calculateTicketStatus* / partner vs owner",
+        "Photo requirement gates + outstanding operators",
+        "Import/fetch API in ticketImporter (POSR processTicket*)"
+      ],
+      "checks": [
+        "npm run build:ui"
+      ],
+      "smokes": [],
+      "notes": "Phase F3: status engine in ticket-status.js before ticketImporter.js. Workflow badges use ack, not operator/photo overrides (removed 0069)."
+    },
+    {
+      "id": "frontend-map-county-coverage",
+      "risk": "medium",
+      "paths": [
+        "frontend/js/mapCountyCoverage.js",
+        "frontend/data/counties/clark_nv.geojson",
+        "frontend/js/map.js",
+        "frontend/js/geocodeSearch.js",
+        "frontend/js/userLocation.js",
+        "frontend/js/tickets/createTicketAssessorOverlay.js",
+        "frontend/js/tickets/createTicketWizard.js",
+        "frontend/build.mjs"
+      ],
+      "siblings": [
+        "map right-click parcel lookup (hasFeatureAtPoint parcelLookup → GISMO; else geocodeSearch fetchReverseGeocode Photon/Nominatim)",
+        "GET /api/geocoding/reverse (Photon/Nominatim — outside-Clark right-click)",
+        "create-ticket address search (hasFeatureInViewport addressSearch → Clark locator vs Nominatim)",
+        "map toolbar location fan address search (Clark GISMO → Photon/Nominatim fallback via fetchMapToolbarAddressSuggestions)",
+        "create-ticket parcel overlays (resolveParcelOverlayProvider → Clark GISMO vs USAN WMS)",
+        "map moveend/zoomend activeCountyIds tracking",
+        "data/counties/clark_nv.geojson lazy fetch (fail-closed for dedicated Clark features)"
+      ],
+      "checks": [
+        "npm run build:ui"
+      ],
+      "smokes": [],
+      "notes": "Bundle order: mapCountyCoverage.js after parcelGeocode.js, before map.js. NV USAN fallback is bbox-only (assessorOverlayFallback)."
+    },
+    {
+      "id": "frontend-create-ticket-assessor-overlay",
+      "risk": "medium",
+      "paths": [
+        "frontend/js/tickets/createTicketAssessorOverlay.js",
+        "frontend/js/mapCountyCoverage.js",
+        "frontend/js/tickets/createTicketWizard.js",
+        "frontend/build.mjs"
+      ],
+      "siblings": [
+        "create-ticket wizard open / close / minimize (sessionActive only; minimize must keep overlays)",
+        "aerialMapPane (z350) drone orthos — assessor must stay above, never clear",
+        "ticketPane (z380) ticket polygons — assessor must stay below",
+        "dig-site polygons (createTicketMapPolygon / bulk sync, default overlayPane)",
+        "photos + annotations + data-layer preview moveend/zoomend listeners",
+        "parcelGeocodeModule.latLngToStatePlane (WKID 102707 bbox) — Clark GISMO only",
+        "mapCountyCoverageModule.resolveParcelOverlayProvider (map center → Clark vs USAN vs none)",
+        "CSP img-src/connect-src maps.clarkcountynv.gov + usanmap.pcges.us",
+        "layer panel Clear Layers / mapOverlayToggles (must not register assessor)"
+      ],
+      "checks": [
+        "npm run build:ui"
+      ],
+      "smokes": [],
+      "notes": "Create-ticket parcel overlays at zoom 17+: Clark GISMO AssessorMap+Anno when center in Clark polygon; else statewide NV USAN WMS parcels_nv. Bundle order: createTicketAssessorOverlay.js before createTicketWizard.js; mapCountyCoverage before both map.js and overlay module consumers."
+    },
+    {
+      "id": "frontend-create-ticket-shared-presets",
+      "risk": "medium",
+      "paths": [
+        "frontend/js/tickets/createTicketWizardPresets.js",
+        "frontend/js/tickets/createTicketWizard.js",
+        "frontend/js/ui.js",
+        "frontend/build.mjs"
+      ],
+      "siblings": [
+        "GET/PUT /users/me/ui-preferences (must keep userProfile + ticketPopupDimensions + createTicketSharedPresets)",
+        "create-ticket wizard shared step applySharedFormSnapshot / reloadLookupsForTicketType",
+        "settings/profile persist via buildUiPreferencesPayload / syncUserUiPreferencesFromServer",
+        "bundle order: createTicketWizardPresets.js before createTicketWizard.js"
+      ],
+      "checks": [
+        "npm run build:ui"
+      ],
+      "smokes": [],
+      "notes": "Per-user max 10 shared-step presets in ui-preferences.createTicketSharedPresets; localStorage cache via getCreateTicketSharedPresetsFromStorage."
+    },
+    {
+      "id": "frontend-config-override",
+      "risk": "high",
+      "paths": [
+        "frontend/js/config-override.js",
+        "frontend/js/config-override.staging.js"
+      ],
+      "siblings": [
+        "Feature flags / API base URL / env overrides for all pages"
+      ],
+      "checks": [
+        "npm run build:ui"
+      ],
+      "smokes": [],
+      "notes": "Staging override ships with UI deploy — confirm wrong env is not pointed at prod API."
+    },
+    {
+      "id": "frontend-pwa",
+      "risk": "medium",
+      "paths": [
+        "frontend/js/pwa-register.js",
+        "frontend/sw.js",
+        "frontend/service-worker.js"
+      ],
+      "siblings": [
+        "Service worker registration",
+        "Precache / cache version bump for asset changes"
+      ],
+      "checks": [
+        "npm run build:ui"
+      ],
+      "smokes": [],
+      "notes": "After asset or SW logic changes, confirm clients get a cache bump."
+    },
+    {
+      "id": "data-routes",
+      "risk": "high",
+      "paths": [
+        "cloudflare/deploy/src/routes/data.ts",
+        "cloudflare/deploy/src/routes/dataShared.ts",
+        "cloudflare/deploy/src/routes/dataGeospatialRoutes.ts",
+        "cloudflare/deploy/src/routes/dataMediaRoutes.ts",
+        "cloudflare/deploy/src/routes/dataPhotoMapRoutes.ts",
+        "cloudflare/deploy/src/routes/dataMapWorkspaceRoutes.ts",
+        "cloudflare/deploy/src/routes/dataAerialRoutes.ts",
+        "cloudflare/deploy/src/routes/dataReportedEventsRoutes.ts"
+      ],
+      "siblings": [
+        "GET /media/:id/file + /thumbnail (binary, pre-expressRes)",
+        "media upload/list + access-token (multipartMediaMiddleware)",
+        "GET /media/photos/map + cluster + spatial + for-ticket",
+        "media annotations GET/PUT",
+        "map-workspace GET/PUT",
+        "aerial-maps + accessible + favorites + PATCH access + PUT orgs + bucket-providers + bucket-search",
+        "media CRUD photo-tags + GET/PATCH/DELETE :id",
+        "PATCH /media/:id/public",
+        "map-workspace layer public",
+        "reported-events CRUD",
+        "geospatial POST/GET/DELETE"
+      ],
+      "checks": [
+        "npm run typecheck",
+        "npm run check:route-undef"
+      ],
+      "smokes": [],
+      "notes": "Phase 3 split done. Binary media before expressReqResMiddleware; photo-map before GET /media/:id. export { data } from data.ts unchanged."
+    },
+    {
+      "id": "auth-self-service-signup",
+      "risk": "high",
+      "paths": [
+        "cloudflare/deploy/src/routes/authRoutes.ts",
+        "cloudflare/deploy/src/routes/signupRoutes.ts",
+        "cloudflare/deploy/src/lib/signupDomain.ts",
+        "cloudflare/deploy/src/routes/organizations.ts",
+        "cloudflare/deploy/src/lib/workflowAckCompliance.cjs",
+        "cloudflare/deploy/migrations/0061_self_service_signup.sql"
+      ],
+      "siblings": [
+        "GET /auth/signup-preview",
+        "GET /auth/signup-check-org-name",
+        "POST /auth/signup-validate-usan",
+        "POST /auth/signup",
+        "GET|POST /auth/verify-email",
+        "POST /auth/resend-verification",
+        "POST /auth/login + /forgot-password + /reset-password + /me",
+        "PUT /organizations/:id (email_domain / name_normalized)",
+        "organization_pacweb_accounts master insert",
+        "runPacwebPollCore (45-day daysBackOverride after verify)",
+        "frontend signup.html / usanOnboarding / Admin Service accounts"
+      ],
+      "checks": [
+        "npm run typecheck",
+        "npm run check:route-undef",
+        "npm run check:migrations",
+        "npm run build:ui"
+      ],
+      "smokes": [],
+      "notes": "Public signup must re-resolve org/allowlist on verify. Encrypt USAN on pending_signups. Rate-limit USAN validate."
+    },
+    {
+      "id": "user-auth-limits",
+      "risk": "high",
+      "paths": [
+        "cloudflare/deploy/src/lib/loginRateLimit.ts",
+        "cloudflare/deploy/src/routes/userAuthLimitsRoutes.ts",
+        "cloudflare/deploy/src/routes/authRoutes.ts",
+        "cloudflare/deploy/src/routes/users.ts",
+        "frontend/js/admin/admin-organizations-users.js",
+        "frontend/forgot-password.html"
+      ],
+      "siblings": [
+        "POST /api/auth/login",
+        "POST /api/auth/forgot-password",
+        "POST /api/auth/reset-password",
+        "GET /api/users/:id/login-history",
+        "GET /api/users/:id/auth-limits",
+        "POST /api/users/:id/auth-limits/clear",
+        "Admin edit user modal"
+      ],
+      "checks": [
+        "npm run typecheck",
+        "npm run check:route-undef",
+        "npm run build:ui"
+      ],
+      "smokes": [],
+      "notes": "Password-reset repeats within 60s do not count. A failed send does not consume a try. Clear does not delete shared IP login buckets."
+    },
+    {
+      "id": "wrangler-d1",
+      "risk": "high",
+      "paths": [
+        "cloudflare/deploy/wrangler.toml",
+        "cloudflare/deploy/migrations/"
+      ],
+      "siblings": [
+        "D1 bindings / env staging vs production",
+        "Migration apply order on deploy"
+      ],
+      "checks": [
+        "npm run check:migrations",
+        "npm run typecheck"
+      ],
+      "smokes": [],
+      "notes": "Never apply prod migrations from a staging-only experiment without review."
+    },
+    {
+      "id": "project-share-page",
+      "risk": "medium",
+      "paths": [
+        "frontend/share.html",
+        "frontend/js/projectSharePage.js",
+        "frontend/js/shareLinkQrShim.js",
+        "frontend/js/sharePageCaptureShim.js",
+        "frontend/js/share/operatorResponseStatus.js",
+        "frontend/css/project-share-page.css",
+        "frontend/js/projectShareNvPublic.js"
+      ],
+      "siblings": [
+        "share.html header Share / Tickets controls",
+        "QR panel + print stylesheet",
+        "app-share bundle (JS_BUNDLE_SHARE + NPM_SHIM_BUNDLES)",
+        "public project-share guest map / ticket list / photos"
+      ],
+      "checks": [
+        "npm run build:ui"
+      ],
+      "smokes": [],
+      "notes": "Guest-only page; QR encodes window.location.href. Keep Ticket Hub share-link admin UI separate."
+    },
+    {
+      "id": "tickets-analytics",
+      "risk": "low",
+      "paths": [
+        "cloudflare/deploy/src/routes/tickets/analyticsRoutes.ts",
+        "cloudflare/deploy/src/lib/ticketAnalyticsQueries.cjs",
+        "frontend/js/ticketHub/ticket-hub-analytics.js"
+      ],
+      "siblings": [
+        "GET /tickets/analytics/summary",
+        "GET /tickets/analytics/blockers",
+        "GET /tickets/analytics/pending-utility",
+        "GET /tickets/analytics/late-responses",
+        "GET /tickets/analytics/export.csv",
+        "Ticket Hub Analytics tab (JIT load)"
+      ],
+      "checks": [
+        "npm run typecheck",
+        "npm run check:route-undef",
+        "npm run build:ui"
+      ],
+      "smokes": [],
+      "notes": "Additive read-only routes. Does not modify computeWorkflowStatus, poll, refresh, or ack paths."
+    },
+    {
+      "id": "guided-tour",
+      "risk": "low",
+      "paths": [
+        "frontend/js/guidedTour.js",
+        "frontend/js/guidedTourSteps.js",
+        "frontend/app.js",
+        "frontend/js/ui.js",
+        "frontend/js/map.js",
+        "frontend/js/mapTopLeftControls.js",
+        "frontend/index.html",
+        "frontend/styles/partials/_11-guided-tour.css"
+      ],
+      "siblings": [
+        "app boot / maybeStartGuidedTour after tickets + USAN welcome",
+        "User Guide Take a tour replay",
+        "Ticket Hub / Data Hub open-close during tour steps",
+        "map circle menus + mobile FAB launcher",
+        "layer control toggle #mapLayerControlToggle / #mobileLayersButton"
+      ],
+      "checks": [
+        "npm run build:ui"
+      ],
+      "smokes": [],
+      "notes": "First-run spotlight tour; localStorage per user. Gated by window.LOCUS_ENABLE_GUIDED_TOUR (off by default). Does not change ticket/sync/API behavior."
+    },
+    {
+      "id": "photo-staking-v2",
+      "risk": "medium",
+      "paths": [
+        "frontend/js/photos/photoStakeUtils.js",
+        "frontend/js/photos/photos-manage-data.js",
+        "frontend/js/photos/photos-map-sync.js",
+        "frontend/js/photos/photos-upload-viewer.js",
+        "frontend/js/photos/photoZipExpand.js",
+        "frontend/js/dirtReportPhotoGallery.js",
+        "frontend/js/dirtReport.js",
+        "frontend/build.mjs",
+        "frontend/index.html",
+        "frontend/js/i18n.js",
+        "frontend/styles/partials/_03-sidebar-drawing-photos-measure.css",
+        "frontend/styles/partials/_10-dirt-report.css"
+      ],
+      "siblings": [
+        "DIRT report photo capture/upload",
+        "photo viewer Match this shot",
+        "savedPhotos load/map from server metadata",
+        "ticket polygon photo scope (getPhotosInTicketPolygon)",
+        "openPhotoViewer gallery navigation"
+      ],
+      "checks": [
+        "npm run build:ui"
+      ],
+      "smokes": [],
+      "notes": "V2: stakeOfPhotoId on savedPhotos, DIRT nearby gallery, attached list thumbnails, viewer Compare slider. No API migration."
+    },
+    {
+      "id": "photo-viewer-minimap",
+      "risk": "medium",
+      "paths": [
+        "frontend/js/photos/photoMicromap.js",
+        "frontend/js/photos/photoMapItemUtils.js",
+        "frontend/js/photos/inPageCameraLocation.js",
+        "frontend/js/photos/photos-upload-viewer.js",
+        "frontend/js/photos/photoZipExpand.js",
+        "frontend/js/photos/photoClusterDrawer.js",
+        "frontend/js/photos/photoMapLoader.js",
+        "frontend/js/photos/photos-layer.js",
+        "frontend/js/photos/photoCanvasUtils.js",
+        "frontend/js/photos/photos-manage-data.js",
+        "frontend/js/photos/photos-core.js",
+        "frontend/js/photos/photoExifWrite.js",
+        "frontend/js/dataExport.js",
+        "cloudflare/deploy/src/lib/photoMapQuery.cjs",
+        "frontend/build.mjs",
+        "frontend/index.html",
+        "frontend/styles/partials/_03-sidebar-drawing-photos-measure.css"
+      ],
+      "siblings": [
+        "in-page camera micromap",
+        "photo viewer stamp overlay",
+        "cluster drawer openPhotoViewer",
+        "photo export embed GPS + sidecar",
+        "map popup Facing row"
+      ],
+      "checks": [
+        "npm run build:ui",
+        "npm run typecheck"
+      ],
+      "smokes": [],
+      "notes": "Viewer minimap, cluster metadata fix, heading/accuracy export EXIF+sidecar, lenient photoHasHeading."
+    },
+    {
+      "id": "frontend-ticket-hub-columns-dock-draw",
+      "risk": "high",
+      "paths": [
+        "frontend/js/mapToolActions.js",
+        "frontend/js/drawing.js",
+        "frontend/js/mapContextualDrawStrip.js",
+        "frontend/js/tickets/digSiteLimits.js",
+        "frontend/js/createTicketMapPolygon.js",
+        "frontend/js/tickets/createTicketWizard.js",
+        "frontend/js/tickets/ticket-status.js",
+        "frontend/js/ticketImporter.js",
+        "frontend/js/ticketHub/ticketHubColumnRegistry.js",
+        "frontend/js/ticketHub/ticket-hub-dock.js",
+        "frontend/js/ticketHub/ticket-hub-table-window.js",
+        "frontend/js/ticketHub/ticket-hub-detail-renderers.js",
+        "frontend/js/ticketHub/ticket-hub-actions.js",
+        "frontend/js/ticketHub/ticket-hub-bootstrap.js",
+        "frontend/js/table/tableQueries.js",
+        "cloudflare/deploy/src/routes/geocoding.ts",
+        "cloudflare/deploy/src/lib/ruralClass.cjs",
+        "cloudflare/deploy/src/data/nv-ruca-2020.json",
+        "frontend/data/usda/nv-ruca-2020.json",
+        "frontend/data/transport/nv-freeways.json",
+        "frontend/data/transport/nv-railroads.json",
+        "scripts/build-dig-site-reference-data.mjs",
+        "frontend/build.mjs",
+        "frontend/index.html"
+      ],
+      "siblings": [
+        "create-ticket wizard open/close/minimize + dig-site polygon/circle/line draw",
+        "GET /api/geocoding/rural-class (USDA RUCA line-length cap for draw line tool)",
+        "hub search-area polygon draw + reopen hub",
+        "data-hub query polygons (tableQueries mapQueryPolygonDrawing)",
+        "compliance project map pick polygon",
+        "desktop draw Point/Line/Polygon + Measure + upload visibility",
+        "mobile map tools FAB bubbles + finish/cancel chips",
+        "Ticket Hub table resize widths (ticketHubTableColWidths)",
+        "Ticket Hub window geometry prefs (ui-preferences userProfile)",
+        "feed hub table (Org/Ticket/Service columns — unchanged)",
+        "EXPIRING_SOON calendar-day status + hub expiring_soonest sort",
+        "tech role bulk column hidden",
+        "narrow ≤768 phone Ticket+Job table; desktop column picker visible above 768"
+      ],
+      "checks": [
+        "npm run build:ui",
+        "npm run impact:diff"
+      ],
+      "smokes": [],
+      "notes": "Column picker in hub section tab row (desktop); in-app hub dock modes; create-ticket wizard keeps layers/location/measure visible and hides annotation/upload tools; annotation-only suppress during query-polygon draw (measure stays for query draw)."
+    },
+    {
+      "id": "admin-app-settings",
+      "risk": "medium",
+      "paths": [
+        "cloudflare/deploy/src/routes/appSettingsAdmin.ts",
+        "cloudflare/deploy/src/routes/adminInbox.ts",
+        "cloudflare/deploy/src/lib/appKv.ts",
+        "cloudflare/deploy/src/index.ts",
+        "cloudflare/deploy/src/routes/feedback.ts",
+        "frontend/admin.html",
+        "frontend/admin.css",
+        "frontend/js/admin/admin-core.js",
+        "frontend/js/admin/admin-bootstrap.js",
+        "frontend/js/config.js",
+        "frontend/app.js",
+        "frontend/js/table/tableServiceRequestActions.js",
+        "cloudflare/deploy/src/routes/tickets/shared.ts",
+        "cloudflare/deploy/src/routes/serviceRequests.ts",
+        "cloudflare/deploy/src/routes/signupRoutes.ts",
+        "frontend/js/createTicketMapPolygon.js",
+        "frontend/js/tickets/tickets-popup.js",
+        "frontend/js/ticketHub/ticket-hub-table-window.js",
+        "frontend/js/guidedTour.js",
+        "frontend/js/signup.js",
+        "frontend/login.html",
+        "frontend/signup.html"
+      ],
+      "siblings": [
+        "GET /api/admin/app-settings",
+        "PUT /api/admin/app-settings",
+        "GET/PUT /api/admin/usan-sync-settings",
+        "GET/PUT /api/admin/pac-sync-settings",
+        "POST /api/admin/usan-full-sync",
+        "POST /api/admin/pac-full-sync",
+        "GET /api/admin/inbox-counts",
+        "GET/PATCH/DELETE /api/admin/errors",
+        "POST /api/admin/dev/nuke-tickets",
+        "Admin Public sharing tab visibility",
+        "Admin App Settings tab (dev only)",
+        "GET /api/public-config hideFeedback",
+        "POST /api/feedback when feedback is hidden",
+        "Map Feedback button and account/launcher menus",
+        "Ticket actions (renew, remark, create) when enableTicketActions is off",
+        "POST /api/service-requests when site documentation is hidden",
+        "POST /api/auth/signup when signups are closed",
+        "Guided tour and login Create an account link"
+      ],
+      "checks": [
+        "npm run typecheck",
+        "npm run check:route-undef",
+        "npm run build:ui"
+      ],
+      "smokes": [],
+      "notes": "app_kv keys: admin_ui:show_public_sharing_tab (missing or not 0 shows the tab), app_ui:hide_feedback and app_ui:hide_site_documentation (only 1 hides), app_ui:enable_ticket_actions (missing uses ENABLE_TICKET_RENEWAL; 0/1 override), app_ui:enable_guided_tour and app_ui:close_signups (only 1 turns on). PUT is dev-only. Map, login, and signup read GET /api/public-config."
+    }
+  ]
+}

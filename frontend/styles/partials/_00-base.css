@@ -1,0 +1,19 @@
+﻿:root {
+    --app-staging-cache-bust: 20260716a;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    background: var(--app-bg-page);
+    color: var(--app-text-primary);
+    overflow: hidden;
+    margin: 0;
+    padding: 0;
+}
+

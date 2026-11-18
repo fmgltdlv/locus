@@ -1,0 +1,10 @@
+ne_110m_land.geojson — Natural Earth (public domain)
+https://www.naturalearthdata.com/
+
+us_conus_outline.geojson — Continental US land boundary derived from Natural Earth 110m admin-0 (decimated for web).
+
+us_states_all.geojson — All USA admin-1 features in Natural Earth 50m (50 states, D.C., and any included territories such as Puerto Rico), exterior rings only.
+
+counties/clark_nv.geojson — Clark County, NV boundary (GEOID 32003), simplified for web.
+Source geometry from US Census county polygons via plotly/datasets geojson-counties-fips.json
+(public-domain Census TIGER/Line / cartographic county boundaries).

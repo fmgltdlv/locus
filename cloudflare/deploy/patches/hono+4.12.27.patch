@@ -1,0 +1,60 @@
+diff --git a/node_modules/hono/dist/cjs/context.js b/node_modules/hono/dist/cjs/context.js
+index 9a10192..e54c0aa 100644
+--- a/node_modules/hono/dist/cjs/context.js
++++ b/node_modules/hono/dist/cjs/context.js
+@@ -140,7 +140,11 @@ class Context {
+    */
+   set res(_res) {
+     if (this.#res && _res) {
+-      _res = createResponseInstance(_res.body, _res);
++      _res = createResponseInstance(_res.body, {
++        status: _res.status,
++        statusText: _res.statusText,
++        headers: new Headers(_res.headers)
++      });
+       for (const [k, v] of this.#res.headers.entries()) {
+         if (k === "content-type") {
+           continue;
+@@ -230,7 +234,11 @@ class Context {
+    */
+   header = (name, value, options) => {
+     if (this.finalized) {
+-      this.#res = createResponseInstance(this.#res.body, this.#res);
++      this.#res = createResponseInstance(this.#res.body, {
++        status: this.#res.status,
++        statusText: this.#res.statusText,
++        headers: new Headers(this.#res.headers)
++      });
+     }
+     const headers = this.#res ? this.#res.headers : this.#preparedHeaders ??= new Headers();
+     if (value === void 0) {
+diff --git a/node_modules/hono/dist/context.js b/node_modules/hono/dist/context.js
+index bc79082..2fbafe5 100644
+--- a/node_modules/hono/dist/context.js
++++ b/node_modules/hono/dist/context.js
+@@ -118,7 +118,11 @@ var Context = class {
+    */
+   set res(_res) {
+     if (this.#res && _res) {
+-      _res = createResponseInstance(_res.body, _res);
++      _res = createResponseInstance(_res.body, {
++        status: _res.status,
++        statusText: _res.statusText,
++        headers: new Headers(_res.headers)
++      });
+       for (const [k, v] of this.#res.headers.entries()) {
+         if (k === "content-type") {
+           continue;
+@@ -208,7 +212,11 @@ var Context = class {
+    */
+   header = (name, value, options) => {
+     if (this.finalized) {
+-      this.#res = createResponseInstance(this.#res.body, this.#res);
++      this.#res = createResponseInstance(this.#res.body, {
++        status: this.#res.status,
++        statusText: this.#res.statusText,
++        headers: new Headers(this.#res.headers)
++      });
+     }
+     const headers = this.#res ? this.#res.headers : this.#preparedHeaders ??= new Headers();
+     if (value === void 0) {

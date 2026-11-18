@@ -1,0 +1,1226 @@
+/**
+ * Auth shell (sign-in, sign-up, password reset, legal) — brand teal + amber accent.
+ * Loaded after app-themes.css + styles.css; .login-* layout rules win here.
+ */
+
+body.auth-page {
+    --auth-bg-deep: #020617;
+    --auth-bg-mid: #071a24;
+    --auth-brand: #073047;
+    --auth-brand-mid: #0c4a6e;
+    --auth-brand-bright: #0f766e;
+    --auth-accent-warm: #fbbf24;
+    --auth-accent-warm-soft: #fcd34d;
+    --auth-cyan: #22d3ee;
+    --auth-text: #f1f5f9;
+    --auth-text-muted: #94a3b8;
+    --auth-border: rgba(34, 211, 238, 0.18);
+    --auth-border-strong: rgba(45, 212, 191, 0.35);
+    --auth-glass: rgba(7, 28, 42, 0.72);
+    --auth-glass-card: rgba(8, 32, 48, 0.85);
+
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: var(--auth-bg-deep);
+    color: var(--auth-text);
+    overflow-x: hidden;
+    overflow-y: auto;
+    min-height: 100vh;
+    min-height: 100dvh;
+}
+
+/* --- Layout shell --- */
+.login-layout {
+    display: flex;
+    min-height: 100vh;
+    min-height: 100dvh;
+    background:
+        radial-gradient(ellipse 100% 70% at 85% 5%, rgba(15, 118, 110, 0.22) 0%, transparent 50%),
+        radial-gradient(ellipse 80% 60% at 10% 95%, rgba(7, 48, 71, 0.55) 0%, transparent 55%),
+        radial-gradient(ellipse 50% 40% at 50% 50%, rgba(34, 211, 238, 0.04) 0%, transparent 70%),
+        linear-gradient(168deg, var(--auth-bg-deep) 0%, var(--auth-bg-mid) 42%, #041018 100%);
+    align-items: stretch;
+}
+
+.login-layout--card-right {
+    flex-direction: row;
+}
+
+.login-layout--card-right .login-globe-wrap {
+    order: 0;
+}
+
+.login-layout--card-right .login-sidebar {
+    order: 1;
+    justify-content: flex-end;
+}
+
+.login-layout--card-left {
+    flex-direction: row;
+}
+
+.login-layout--card-left .login-globe-wrap {
+    order: 1;
+}
+
+.login-layout--card-left .login-sidebar {
+    order: 0;
+    justify-content: flex-start;
+}
+
+/* Hero: map canvas */
+.login-globe-wrap {
+    flex: 1 1 52%;
+    min-height: 280px;
+    position: relative;
+    background:
+        radial-gradient(ellipse 90% 80% at 35% 25%, rgba(12, 74, 110, 0.5) 0%, transparent 52%),
+        radial-gradient(ellipse 70% 60% at 75% 70%, rgba(15, 118, 110, 0.2) 0%, transparent 48%),
+        linear-gradient(155deg, #0a1f2e 0%, #061018 55%, #030a10 100%);
+    overflow: hidden;
+}
+
+.login-globe-wrap::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 2;
+    opacity: 0.35;
+    background-image:
+        linear-gradient(rgba(34, 211, 238, 0.06) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(34, 211, 238, 0.06) 1px, transparent 1px);
+    background-size: 48px 48px;
+    mask-image: radial-gradient(ellipse 85% 75% at 50% 45%, black 20%, transparent 72%);
+}
+
+.login-globe-wrap::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: linear-gradient(
+        90deg,
+        rgba(2, 6, 23, 0.55) 0%,
+        transparent 32%,
+        transparent 68%,
+        rgba(2, 6, 23, 0.35) 100%
+    );
+    z-index: 1;
+}
+
+.login-globe-wrap canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+}
+
+/* Sidebar */
+.login-sidebar {
+    flex: 0 1 auto;
+    display: flex;
+    align-items: center;
+    align-items: safe center;
+    min-height: 0;
+    overflow-x: hidden;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+    padding: 2rem clamp(1rem, 4vw, 3rem);
+    background: linear-gradient(
+        180deg,
+        rgba(4, 16, 24, 0.92) 0%,
+        rgba(2, 10, 16, 0.96) 100%
+    );
+    border-left: 1px solid var(--auth-border);
+    box-shadow: -16px 0 56px rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(12px);
+}
+
+.login-layout--card-left .login-sidebar {
+    border-left: none;
+    border-right: 1px solid var(--auth-border);
+    box-shadow: 16px 0 56px rgba(0, 0, 0, 0.4);
+}
+
+/* Card */
+.login-card {
+    position: relative;
+    background: var(--auth-glass-card);
+    border: 1px solid var(--auth-border);
+    border-radius: 1.125rem;
+    padding: 2.25rem 2rem;
+    width: 100%;
+    max-width: 420px;
+    box-shadow:
+        0 28px 80px rgba(0, 0, 0, 0.45),
+        0 0 0 1px rgba(255, 255, 255, 0.04) inset;
+    backdrop-filter: blur(20px);
+}
+
+.login-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 1.25rem;
+    right: 1.25rem;
+    height: 3px;
+    border-radius: 0 0 6px 6px;
+    background: linear-gradient(
+        90deg,
+        transparent,
+        var(--auth-brand-bright) 25%,
+        var(--auth-accent-warm) 55%,
+        var(--auth-brand-mid) 80%,
+        transparent
+    );
+    opacity: 0.9;
+}
+
+.login-header {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.login-logo {
+    display: block;
+    margin: 0 auto 1rem;
+    width: 56px;
+    height: 56px;
+    border-radius: 14px;
+    box-shadow:
+        0 8px 28px rgba(7, 48, 71, 0.55),
+        0 0 0 1px rgba(255, 255, 255, 0.08);
+}
+
+.login-title {
+    font-family: 'Plus Jakarta Sans', 'Inter', system-ui, sans-serif;
+    font-size: 1.5rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: var(--auth-text);
+    margin-bottom: 0.5rem;
+    line-height: 1.25;
+}
+
+.login-subtitle {
+    font-size: 0.8125rem;
+    font-weight: 500;
+    letter-spacing: 0.04em;
+    color: var(--auth-text-muted);
+    line-height: 1.45;
+    max-width: 18rem;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.login-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.35rem;
+}
+
+.auth-page .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+}
+
+.auth-page .form-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    color: var(--auth-text-muted);
+}
+
+.auth-page .form-input {
+    width: 100%;
+    padding: 0.8rem 0.95rem;
+    background: rgba(2, 8, 14, 0.75);
+    border: 1px solid var(--auth-border);
+    border-radius: 0.625rem;
+    color: var(--auth-text);
+    font-size: 16px;
+    box-sizing: border-box;
+    transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+}
+
+.auth-page .form-input::placeholder {
+    color: rgba(148, 163, 184, 0.55);
+}
+
+.auth-page .form-input:hover {
+    border-color: var(--auth-border-strong);
+    background: rgba(2, 10, 16, 0.85);
+}
+
+.auth-page .form-input:focus {
+    outline: none;
+    border-color: rgba(45, 212, 191, 0.55);
+    box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.2);
+}
+
+.login-button {
+    width: 100%;
+    padding: 0.85rem 1rem;
+    background: linear-gradient(135deg, var(--auth-brand) 0%, var(--auth-brand-mid) 48%, var(--auth-brand-bright) 100%);
+    color: #f8fafc;
+    border: none;
+    border-radius: 0.625rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    cursor: pointer;
+    transition: filter 0.2s, transform 0.1s, box-shadow 0.2s;
+    margin-top: 0.35rem;
+    box-shadow:
+        0 4px 20px rgba(7, 48, 71, 0.45),
+        0 1px 0 rgba(255, 255, 255, 0.12) inset;
+}
+
+.login-button:hover {
+    filter: brightness(1.08);
+    box-shadow:
+        0 6px 28px rgba(15, 118, 110, 0.35),
+        0 1px 0 rgba(255, 255, 255, 0.14) inset;
+}
+
+.login-button:active {
+    transform: scale(0.99);
+}
+
+.login-button:disabled {
+    background: #1e293b;
+    color: #64748b;
+    cursor: not-allowed;
+    box-shadow: none;
+    filter: none;
+}
+
+.login-button.is-busy {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.6rem;
+    cursor: progress;
+    background: linear-gradient(135deg, var(--auth-brand) 0%, var(--auth-brand-mid) 48%, var(--auth-brand-bright) 100%);
+    color: #f8fafc;
+    box-shadow: 0 4px 20px rgba(7, 48, 71, 0.45);
+    filter: none;
+}
+
+.login-button.is-busy:disabled {
+    background: linear-gradient(135deg, var(--auth-brand) 0%, var(--auth-brand-mid) 48%, var(--auth-brand-bright) 100%);
+    color: #f8fafc;
+}
+
+.login-button .login-spinner {
+    width: 1rem;
+    height: 1rem;
+    border: 2px solid currentColor;
+    border-right-color: transparent;
+    border-radius: 50%;
+    animation: login-spin 0.7s linear infinite;
+    flex-shrink: 0;
+}
+
+@keyframes login-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .login-button .login-spinner {
+        animation-duration: 2s;
+    }
+}
+
+.login-button--secondary {
+    margin-top: 0.5rem;
+    background: transparent;
+    color: var(--auth-text);
+    border: 1px solid var(--auth-border-strong);
+    box-shadow: none;
+    font-weight: 600;
+}
+
+.login-button--secondary:hover {
+    filter: none;
+    background: rgba(34, 211, 238, 0.06);
+    border-color: rgba(45, 212, 191, 0.5);
+    color: #f8fafc;
+}
+
+.login-button--secondary:active {
+    background: rgba(34, 211, 238, 0.1);
+}
+
+.auth-page .error-message {
+    background: rgba(127, 29, 29, 0.4);
+    border: 1px solid rgba(248, 113, 113, 0.35);
+    color: #fecaca;
+    padding: 0.75rem;
+    border-radius: 0.625rem;
+    font-size: 0.875rem;
+    display: none;
+}
+
+.auth-page .error-message[hidden] {
+    display: none !important;
+}
+
+.auth-page .error-message.show,
+.auth-page #signupError:not([hidden]),
+.auth-page #signupInfo:not([hidden]) {
+    display: block;
+}
+
+.auth-page .error-message.success {
+    background: rgba(6, 78, 59, 0.45);
+    border-color: rgba(52, 211, 153, 0.35);
+    color: #a7f3d0;
+}
+
+.auth-page .login-help-text {
+    font-size: 0.875rem;
+    line-height: 1.45;
+    color: rgba(241, 245, 249, 0.82);
+    margin: 0 0 1rem;
+}
+
+.auth-page .login-help-text--muted {
+    font-size: 0.75rem;
+    color: var(--auth-text-muted);
+    margin: 0.35rem 0 0;
+}
+
+.auth-page .login-help-text--status {
+    font-size: 0.8rem;
+    min-height: 1.2em;
+    margin: 0 0 0.75rem;
+    color: var(--auth-text-muted);
+}
+
+.auth-page .login-help-text--error {
+    color: #fecaca;
+}
+
+.auth-page .login-help-text--success {
+    color: #a7f3d0;
+}
+
+.auth-page .remember-me {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.auth-page .remember-me input[type='checkbox'] {
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+    accent-color: var(--auth-brand-bright);
+}
+
+.auth-page .remember-me label {
+    font-size: 0.875rem;
+    color: rgba(241, 245, 249, 0.88);
+    cursor: pointer;
+}
+
+.auth-page .forgot-password {
+    text-align: center;
+    margin-top: 1.15rem;
+}
+
+.auth-page .forgot-password a {
+    color: var(--auth-accent-warm-soft);
+    text-decoration: none;
+    font-size: 0.8125rem;
+    font-weight: 500;
+    display: inline-block;
+    padding: 0.5rem 0.35rem;
+    min-height: 44px;
+    line-height: 1.4;
+    box-sizing: border-box;
+}
+
+.auth-page .forgot-password a:hover {
+    text-decoration: underline;
+    color: var(--auth-accent-warm);
+}
+
+.login-legal-footer {
+    text-align: center;
+    margin-top: 1.5rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--auth-border);
+}
+
+.login-legal-footer a {
+    color: var(--auth-text-muted);
+    text-decoration: none;
+    font-size: 0.75rem;
+    font-weight: 500;
+    letter-spacing: 0.04em;
+    display: inline-block;
+    padding: 0.5rem 0.75rem;
+    min-height: 44px;
+    line-height: 1.4;
+    box-sizing: border-box;
+}
+
+.login-legal-footer a:hover {
+    color: var(--auth-accent-warm);
+    text-decoration: underline;
+}
+
+body.auth-page--legal {
+    overflow: hidden;
+    height: 100vh;
+    height: 100dvh;
+    max-height: 100vh;
+    max-height: 100dvh;
+}
+
+.login-layout--legal {
+    height: 100vh;
+    height: 100dvh;
+    max-height: 100vh;
+    max-height: 100dvh;
+    overflow: hidden;
+}
+
+.login-layout--legal .login-globe-wrap {
+    display: none;
+}
+
+.login-layout--legal .login-sidebar {
+    flex: 1 1 48%;
+    min-width: 0;
+    min-height: 0;
+    align-items: flex-start;
+    align-self: stretch;
+    overflow-x: hidden;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+    touch-action: pan-y;
+}
+
+.login-card--legal {
+    max-width: 40rem;
+}
+
+.legal-content {
+    font-size: 0.875rem;
+    line-height: 1.6;
+    color: rgba(241, 245, 249, 0.88);
+}
+
+.legal-content h2 {
+    font-family: 'Plus Jakarta Sans', 'Inter', system-ui, sans-serif;
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: var(--auth-text);
+    margin: 1.5rem 0 0.5rem;
+}
+
+.legal-content p {
+    margin: 0 0 0.85rem;
+}
+
+.legal-content ul {
+    margin: 0 0 0.85rem;
+    padding-left: 1.25rem;
+}
+
+.legal-content li {
+    margin-bottom: 0.45rem;
+}
+
+.legal-content a {
+    color: var(--auth-accent-warm-soft);
+    text-decoration: none;
+}
+
+.legal-content a:hover {
+    text-decoration: underline;
+    color: var(--auth-accent-warm);
+}
+
+.legal-content code {
+    font-size: 0.8125rem;
+    background: rgba(2, 8, 14, 0.75);
+    border: 1px solid var(--auth-border);
+    border-radius: 0.25rem;
+    padding: 0.1rem 0.35rem;
+}
+
+.legal-updated {
+    font-size: 0.75rem;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--auth-text-muted);
+    margin-bottom: 1rem !important;
+}
+
+.login-layout-toggle {
+    position: fixed;
+    bottom: max(1rem, env(safe-area-inset-bottom, 0px));
+    left: max(1rem, env(safe-area-inset-left, 0px));
+    z-index: 100;
+    font-size: 0.6875rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: rgba(148, 163, 184, 0.55);
+}
+
+.login-layout-toggle button {
+    background: transparent;
+    border: 1px solid var(--auth-border);
+    color: rgba(45, 212, 191, 0.85);
+    padding: 0.35rem 0.65rem;
+    border-radius: 0.25rem;
+    cursor: pointer;
+    font-size: 0.6875rem;
+    letter-spacing: 0.06em;
+    margin-left: 0.35rem;
+    transition: background 0.2s, border-color 0.2s;
+}
+
+.login-layout-toggle button:hover {
+    background: rgba(15, 118, 110, 0.12);
+    border-color: var(--auth-border-strong);
+}
+
+@media (max-width: 900px) {
+    .login-layout--legal {
+        height: 100vh;
+        height: 100dvh;
+        max-height: 100vh;
+        max-height: 100dvh;
+    }
+
+    body.auth-page {
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+        touch-action: pan-y;
+    }
+
+    .login-layout--card-right,
+    .login-layout--card-left {
+        flex-direction: column;
+        min-height: 100dvh;
+    }
+
+    .login-layout .login-globe-wrap:empty {
+        display: none;
+    }
+
+    .login-layout .login-globe-wrap {
+        order: 0 !important;
+        flex: 0 0 min(32vh, 200px);
+        min-height: 160px;
+        border-right: none;
+        border-bottom: 1px solid var(--auth-border);
+    }
+
+    .login-layout .login-sidebar {
+        order: 1 !important;
+        align-items: stretch;
+        justify-content: flex-start;
+        align-self: stretch;
+        border-left: none !important;
+        border-right: none !important;
+        box-shadow: none;
+        flex: 1 1 auto;
+        min-height: auto;
+        padding: max(0.75rem, env(safe-area-inset-top, 0px)) 0.75rem
+            calc(1.25rem + env(safe-area-inset-bottom, 0px));
+        overflow: visible;
+        overscroll-behavior: auto;
+        touch-action: pan-y;
+    }
+
+    .login-layout .login-card {
+        padding: 1.25rem 1rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .login-header {
+        margin-bottom: 1.35rem;
+    }
+
+    .login-title {
+        font-size: 1.35rem;
+    }
+
+    .login-subtitle {
+        font-size: 0.75rem;
+    }
+}
+
+/* --- OneCallAccess-style auth (USAN ngen login pattern) --- */
+.auth-page--onecallaccess {
+    --onecall-green: #3b5f1a;
+    --onecall-green-hover: #466d22;
+    --onecall-link: #0082bd;
+    --onecall-ink: rgba(0, 0, 0, 0.87);
+    --onecall-muted: #757575;
+    --onecall-brand-bar: linear-gradient(rgba(34, 34, 34, 0.78), rgba(34, 34, 34, 0.78)),
+        linear-gradient(180deg, #3a3530 0%, #2a2724 100%);
+
+    font-family: -apple-system, BlinkMacSystemFont, system-ui, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    background: #bdbdbd;
+    color: var(--onecall-ink);
+}
+
+.auth-page--onecallaccess .onecall-access {
+    position: relative;
+    min-height: 100vh;
+    min-height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 1.5rem 1rem 2.5rem;
+    box-sizing: border-box;
+}
+
+.auth-page--onecallaccess .onecall-access__bg {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    overflow: hidden;
+    background:
+        linear-gradient(0deg, rgba(51, 51, 51, 0.28), rgba(51, 51, 51, 0.28)),
+        url('../assets/auth/onecallaccess-bg.jpg') center center / 108% auto no-repeat;
+    animation: onecallKenBurns 52s ease-in-out infinite alternate;
+    will-change: background-size, background-position;
+}
+
+.auth-page--onecallaccess .onecall-panel {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    max-width: 480px;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
+}
+
+.auth-page--onecallaccess .onecall-panel__brand {
+    padding: 1.25rem 1.25rem 1.1rem;
+    background: var(--onecall-brand-bar);
+}
+
+.auth-page--onecallaccess .onecall-panel__logo-wrap {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.65rem;
+    padding: 0.35rem 0.55rem;
+    background: #fff;
+    border-radius: 2px;
+    margin-bottom: 0.85rem;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.12);
+}
+
+.auth-page--onecallaccess .onecall-panel__logo {
+    display: block;
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+}
+
+.auth-page--onecallaccess .onecall-panel__logo-word {
+    font-size: 1.125rem;
+    font-weight: 800;
+    letter-spacing: -0.04em;
+    color: #073047;
+    line-height: 1;
+}
+
+.auth-page--onecallaccess .onecall-panel__tagline {
+    margin: 0;
+    font-size: 0.8125rem;
+    line-height: 1.45;
+    font-weight: 400;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    color: #fff;
+}
+
+.auth-page--onecallaccess .onecall-panel__body {
+    padding: 0 2.5rem 2.5rem;
+    background: rgba(255, 255, 255, 0.92);
+    backdrop-filter: blur(6px);
+}
+
+.auth-page--onecallaccess .onecall-panel__title {
+    margin: 0;
+    padding: 1.75rem 0 1.25rem;
+    font-size: 2rem;
+    font-weight: 300;
+    line-height: 1.2;
+    color: #333;
+    font-family: inherit;
+}
+
+.auth-page--onecallaccess .onecall-field {
+    margin-bottom: 0.35rem;
+}
+
+.auth-page--onecallaccess .onecall-field .form-label {
+    display: block;
+    margin-bottom: 0.35rem;
+    font-size: 0.8125rem;
+    font-weight: 400;
+    letter-spacing: normal;
+    text-transform: none;
+    color: var(--onecall-muted);
+}
+
+.auth-page--onecallaccess .onecall-field .form-input {
+    padding: 0.5rem 0;
+    font-size: 0.875rem;
+    color: #333;
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid #bdbdbd;
+    border-radius: 0;
+    box-shadow: none;
+}
+
+.auth-page--onecallaccess .onecall-field .form-input:hover {
+    border-bottom-color: #9e9e9e;
+    background: transparent;
+}
+
+.auth-page--onecallaccess .onecall-field .form-input:focus {
+    border-bottom-color: var(--onecall-link);
+    box-shadow: none;
+    outline: none;
+}
+
+.auth-page--onecallaccess .onecall-field textarea.form-input {
+    padding: 0.5rem 0;
+    min-height: 3.5rem;
+    resize: vertical;
+    border: none;
+    border-bottom: 1px solid #bdbdbd;
+    border-radius: 0;
+    background: transparent;
+}
+
+.auth-page--onecallaccess .onecall-password-wrap {
+    display: flex;
+    align-items: flex-end;
+    gap: 0.35rem;
+    border-bottom: 1px solid #bdbdbd;
+}
+
+.auth-page--onecallaccess .onecall-password-wrap:focus-within {
+    border-bottom-color: var(--onecall-link);
+}
+
+.auth-page--onecallaccess .onecall-password-wrap .form-input {
+    flex: 1;
+    border-bottom: none;
+}
+
+.auth-page--onecallaccess .onecall-password-toggle {
+    flex-shrink: 0;
+    margin-bottom: 0.35rem;
+    padding: 0.25rem 0.35rem;
+    border: none;
+    background: transparent;
+    color: var(--onecall-muted);
+    cursor: pointer;
+    font-size: 0.875rem;
+    line-height: 1;
+}
+
+.auth-page--onecallaccess .onecall-password-toggle:hover {
+    color: #333;
+}
+
+.auth-page--onecallaccess .onecall-terms,
+.auth-page--onecallaccess .remember-me {
+    display: flex;
+    align-items: flex-start;
+    margin-top: 1rem;
+    gap: 0.55rem;
+}
+
+.auth-page--onecallaccess .onecall-terms label,
+.auth-page--onecallaccess .remember-me label {
+    font-size: 0.875rem;
+    color: var(--onecall-ink);
+    line-height: 1.4;
+}
+
+.auth-page--onecallaccess .onecall-terms a {
+    color: var(--onecall-link);
+    text-decoration: none;
+}
+
+.auth-page--onecallaccess .onecall-terms a:hover {
+    text-decoration: underline;
+}
+
+.auth-page--onecallaccess .onecall-terms input[type='checkbox'],
+.auth-page--onecallaccess .remember-me input[type='checkbox'] {
+    accent-color: var(--onecall-green);
+}
+
+.auth-page--onecallaccess .login-form {
+    gap: 0.85rem;
+}
+
+.auth-page--onecallaccess .login-button {
+    margin-top: 0.75rem;
+    padding: 0.78rem 1.5rem;
+    background: var(--onecall-green);
+    color: #fff;
+    border-radius: 2px;
+    font-size: 1rem;
+    font-weight: 700;
+    letter-spacing: normal;
+    text-transform: none;
+    box-shadow: none;
+}
+
+.auth-page--onecallaccess .login-button:hover {
+    filter: none;
+    background: var(--onecall-green-hover);
+}
+
+.auth-page--onecallaccess .login-button:disabled,
+.auth-page--onecallaccess .login-button.is-busy:disabled {
+    background: #9e9e9e;
+    color: #fff;
+}
+
+.auth-page--onecallaccess .login-button--secondary {
+    margin-top: 0.5rem;
+    background: transparent;
+    color: #333;
+    border: 1px solid #bdbdbd;
+    font-weight: 600;
+}
+
+.auth-page--onecallaccess .login-button--secondary:hover {
+    background: rgba(0, 0, 0, 0.04);
+    border-color: #9e9e9e;
+}
+
+.auth-page--onecallaccess .error-message {
+    margin-bottom: 0.5rem;
+    background: #ffebee;
+    border: 1px solid #ef9a9a;
+    color: #c62828;
+    border-radius: 2px;
+}
+
+.auth-page--onecallaccess .error-message.success {
+    background: #e8f5e9;
+    border-color: #a5d6a7;
+    color: #2e7d32;
+}
+
+.auth-page--onecallaccess .forgot-password {
+    margin-top: 1.25rem;
+    text-align: left;
+}
+
+.auth-page--onecallaccess .forgot-password,
+.auth-page--onecallaccess .onecall-signup-prompt {
+    font-size: 0.875rem;
+    color: var(--onecall-muted);
+}
+
+.auth-page--onecallaccess .forgot-password a,
+.auth-page--onecallaccess .onecall-signup-prompt a,
+.auth-page--onecallaccess .onecall-link {
+    color: var(--onecall-link);
+    text-decoration: none;
+    font-weight: 400;
+}
+
+.auth-page--onecallaccess .forgot-password a:hover,
+.auth-page--onecallaccess .onecall-signup-prompt a:hover,
+.auth-page--onecallaccess .onecall-link:hover {
+    text-decoration: underline;
+}
+
+.auth-page--onecallaccess .onecall-signup-prompt {
+    margin-top: 0.65rem;
+    text-align: left;
+}
+
+.auth-page--onecallaccess .onecall-pwa-hint {
+    margin-top: 1.35rem;
+    font-size: 0.8125rem;
+    color: var(--onecall-muted);
+    text-align: center;
+}
+
+.auth-page--onecallaccess .login-help-text {
+    color: #555;
+}
+
+.auth-page--onecallaccess .login-legal-footer {
+    margin-top: 1.25rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.auth-page--onecallaccess .login-legal-footer a {
+    color: var(--onecall-link);
+}
+
+.auth-page--onecallaccess .onecall-powered {
+    position: relative;
+    z-index: 1;
+    margin-top: 1.25rem;
+    font-size: 0.75rem;
+    color: #fff;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.85), 0 0 10px rgba(0, 0, 0, 0.45);
+}
+
+.auth-page--onecallaccess .onecall-powered strong {
+    font-weight: 600;
+}
+
+.auth-page--onecallaccess.auth-page--legal .onecall-panel {
+    max-width: 42rem;
+}
+
+.auth-page--onecallaccess.auth-page--legal .onecall-panel__body {
+    max-height: min(70vh, 640px);
+    overflow-y: auto;
+}
+
+.auth-page--onecallaccess.auth-page--legal .onecall-panel__title {
+    padding-top: 1.25rem;
+}
+
+/* Legal copy was written for the dark login-layout; OneCall uses a light card. */
+.auth-page--onecallaccess .legal-content {
+    color: var(--onecall-ink);
+    overflow-wrap: break-word;
+}
+
+.auth-page--onecallaccess .legal-content h2 {
+    color: var(--onecall-ink);
+    font-family: inherit;
+}
+
+.auth-page--onecallaccess .legal-content a {
+    color: var(--onecall-link);
+}
+
+.auth-page--onecallaccess .legal-content a:hover {
+    color: var(--onecall-link);
+}
+
+.auth-page--onecallaccess .legal-content code {
+    background: rgba(0, 0, 0, 0.06);
+    border: 1px solid rgba(0, 0, 0, 0.12);
+    color: var(--onecall-ink);
+}
+
+.auth-page--onecallaccess .legal-updated {
+    color: var(--onecall-muted);
+}
+
+.auth-page--onecallaccess .login-help-text--error {
+    color: #c62828;
+}
+
+.auth-page--onecallaccess .login-help-text--success {
+    color: #2e7d32;
+}
+
+@media (max-width: 640px) {
+    .auth-page--onecallaccess .onecall-access {
+        justify-content: flex-start;
+        align-items: stretch;
+        padding: max(0.75rem, env(safe-area-inset-top, 0px)) 0.75rem
+            calc(1.15rem + env(safe-area-inset-bottom, 0px));
+    }
+
+    .auth-page--onecallaccess .onecall-panel {
+        width: 100%;
+        max-width: none;
+        overflow: hidden;
+    }
+
+    .auth-page--onecallaccess .onecall-panel__brand {
+        padding: 1rem 1.1rem 0.85rem;
+    }
+
+    .auth-page--onecallaccess .onecall-panel__body {
+        padding: 0 1.1rem 1.35rem;
+        background: #f7f7f7;
+    }
+
+    .auth-page--onecallaccess .onecall-panel__title {
+        font-size: 1.5rem;
+        padding: 1.1rem 0 0.75rem;
+    }
+
+    .auth-page--onecallaccess .onecall-field .form-input,
+    .auth-page--onecallaccess .onecall-field textarea.form-input {
+        font-size: 1rem;
+    }
+
+    .auth-page--onecallaccess .onecall-access__bg {
+        animation: none;
+        background-size: cover;
+        background-position: center;
+    }
+
+    .auth-page--onecallaccess.auth-page--legal .onecall-panel {
+        max-width: none;
+    }
+
+    .auth-page--onecallaccess.auth-page--legal .onecall-panel__body {
+        max-height: none;
+        overflow: visible;
+    }
+}
+
+/* --- Core auth motion (OneCallAccess shell) --- */
+@keyframes onecallKenBurns {
+    0% {
+        background-size: 108% auto;
+        background-position: 48% 52%;
+    }
+    100% {
+        background-size: 115% auto;
+        background-position: 52% 48%;
+    }
+}
+
+@keyframes onecallPanelEnter {
+    from {
+        opacity: 0;
+        transform: translateY(18px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes onecallLogoPulse {
+    0%,
+    100% {
+        box-shadow: 0 0 0 0 rgba(0, 130, 189, 0);
+    }
+    50% {
+        box-shadow: 0 0 0 4px rgba(0, 130, 189, 0.12);
+    }
+}
+
+@keyframes onecallLogoFloat {
+    0%,
+    100% {
+        transform: translateY(0);
+    }
+    50% {
+        transform: translateY(-2px);
+    }
+}
+
+@keyframes onecallBrandLineDrift {
+    0% {
+        background-position: 0% 50%;
+    }
+    100% {
+        background-position: 100% 50%;
+    }
+}
+
+.auth-page--onecallaccess .onecall-panel {
+    animation: onecallPanelEnter 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+    animation-delay: 0.08s;
+}
+
+.auth-page--onecallaccess .onecall-panel__brand {
+    position: relative;
+    overflow: hidden;
+}
+
+.auth-page--onecallaccess .onecall-panel__brand-lines {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0.5;
+    background:
+        repeating-linear-gradient(
+            105deg,
+            transparent 0,
+            transparent 28px,
+            rgba(0, 160, 175, 0.22) 28px,
+            rgba(0, 160, 175, 0.22) 29px,
+            transparent 29px,
+            transparent 56px,
+            rgba(230, 160, 50, 0.18) 56px,
+            rgba(230, 160, 50, 0.18) 57px
+        );
+    background-size: 200% 100%;
+    animation: onecallBrandLineDrift 28s linear infinite;
+}
+
+.auth-page--onecallaccess .onecall-panel__logo-wrap {
+    position: relative;
+    z-index: 1;
+    animation: onecallLogoPulse 4.5s ease-in-out infinite;
+}
+
+.auth-page--onecallaccess .onecall-panel__logo {
+    animation: onecallLogoFloat 5s ease-in-out infinite;
+}
+
+.auth-page--onecallaccess .login-button {
+    transition: background 0.2s ease, transform 0.18s ease, box-shadow 0.18s ease;
+}
+
+.auth-page--onecallaccess .login-button:not(:disabled):not(.is-busy):hover {
+    transform: translateY(-1px);
+    box-shadow: 0 5px 14px rgba(59, 95, 26, 0.32);
+}
+
+.auth-page--onecallaccess .login-button:not(:disabled):active {
+    transform: translateY(0);
+    box-shadow: none;
+}
+
+.auth-page--onecallaccess .onecall-powered {
+    animation: onecallPanelEnter 0.85s cubic-bezier(0.22, 1, 0.36, 1) both;
+    animation-delay: 0.35s;
+}
+
+.auth-page--onecallaccess .onecall-field .form-input,
+.auth-page--onecallaccess .onecall-password-wrap {
+    transition: border-color 0.2s ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .auth-page--onecallaccess .onecall-access__bg,
+    .auth-page--onecallaccess .onecall-panel,
+    .auth-page--onecallaccess .onecall-powered,
+    .auth-page--onecallaccess .onecall-panel__brand-lines,
+    .auth-page--onecallaccess .onecall-panel__logo-wrap,
+    .auth-page--onecallaccess .onecall-panel__logo {
+        animation: none !important;
+    }
+
+    .auth-page--onecallaccess .login-button {
+        transition: background 0.2s ease;
+    }
+}

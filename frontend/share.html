@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, nofollow">
+    <link rel="icon" href="/assets/logo-mark.svg" type="image/svg+xml" />
+    <title>Shared project view</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
+    <link rel="stylesheet" href="/css/app-themes.css" />
+    <link rel="stylesheet" href="/styles.css" />
+    <link rel="stylesheet" href="/css/project-share-page.css" />
+</head>
+<body class="project-share-page">
+    <div class="project-share-layout" id="projectShareRoot">
+        <header class="project-share-header">
+            <div class="project-share-title-wrap">
+                <h1 id="projectShareTitle">Shared project</h1>
+                <span class="project-share-badge" id="projectShareBadge">Shared view</span>
+            </div>
+            <div class="project-share-header-actions">
+                <div class="project-share-share-wrap" id="projectShareShareWrap" hidden>
+                    <button type="button" class="project-share-share-btn" id="projectShareShareBtn" aria-expanded="false" aria-controls="projectShareSharePanel">
+                        Share
+                    </button>
+                    <div class="project-share-share-panel" id="projectShareSharePanel" hidden role="dialog" aria-label="Share this project">
+                        <p class="project-share-share-hint">Scan to open this shared project</p>
+                        <div class="project-share-share-qr" id="projectShareShareQr">
+                            <img id="projectShareShareQrImg" alt="QR code for this share link" hidden />
+                            <p class="project-share-share-qr-status" id="projectShareShareQrStatus">Loading QR…</p>
+                        </div>
+                        <p class="project-share-share-url" id="projectShareShareUrl"></p>
+                        <button type="button" class="project-share-share-print" id="projectShareSharePrint">Print</button>
+                    </div>
+                </div>
+                <button type="button" class="project-share-panel-toggle" id="projectSharePanelToggle" aria-expanded="false" aria-controls="projectShareSidebar" hidden>
+                    Layers
+                </button>
+            </div>
+        </header>
+        <div class="project-share-status" id="projectShareStatus">Loading…</div>
+        <div class="project-share-main" id="projectShareMain" hidden>
+            <div class="project-share-map-wrap">
+                <div id="projectShareMap" aria-label="Project map"></div>
+                <aside class="project-share-detail" id="projectShareDetail" hidden>
+                    <div class="project-share-detail-header">
+                        <h3 id="projectShareDetailTitle">Ticket</h3>
+                        <button type="button" class="project-share-detail-close" id="projectShareDetailClose" aria-label="Close ticket details">&times;</button>
+                    </div>
+                    <div class="project-share-detail-tabs" role="tablist">
+                        <button type="button" class="project-share-detail-tab is-active" data-share-detail-tab="details" role="tab">Details</button>
+                        <button type="button" class="project-share-detail-tab" data-share-detail-tab="responses" role="tab">
+                            Responses
+                            <span class="project-share-detail-tab-dot" data-share-responses-tab-dot hidden aria-hidden="true"></span>
+                        </button>
+                    </div>
+                    <div class="project-share-detail-body" id="projectShareDetailBody"></div>
+                </aside>
+            </div>
+            <div class="project-share-sidebar-backdrop" id="projectShareSidebarBackdrop" hidden></div>
+            <aside class="project-share-sidebar" id="projectShareSidebar">
+                <div class="project-share-sidebar-handle" aria-hidden="true"></div>
+                <div class="project-share-sidebar-header">
+                    <h2>Tickets</h2>
+                    <button type="button" class="project-share-sidebar-close" id="projectShareSidebarClose" aria-label="Close ticket list" hidden>&times;</button>
+                </div>
+                <div class="project-share-ticket-list" id="projectShareTicketList" role="list"></div>
+                <h2 class="project-share-aerial-heading">Map layers</h2>
+                <div class="project-share-layer-list" id="projectShareLayerList">
+                    <label class="project-share-aerial-item">
+                        <input type="checkbox" id="projectShareToggleTickets" checked>
+                        <span>811 tickets</span>
+                    </label>
+                    <label class="project-share-aerial-item">
+                        <input type="checkbox" id="projectShareTogglePhotos" checked>
+                        <span>Photos</span>
+                    </label>
+                </div>
+                <h2 class="project-share-aerial-heading">Aerial maps</h2>
+                <div class="project-share-aerial-list" id="projectShareAerialList"></div>
+            </aside>
+        </div>
+    </div>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+    <script src="/js/app-share.bundle.js"></script>
+</body>
+</html>

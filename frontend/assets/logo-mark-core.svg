@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40" width="40" height="40" role="img" aria-labelledby="logo-title">
+  <title id="logo-title">Locus Core</title>
+  <desc>Night-ops product mark: gold border, locator dot, and smile on ink.</desc>
+  <rect width="40" height="40" rx="6" fill="#0b0d10"/>
+  <rect x="1.75" y="1.75" width="36.5" height="36.5" rx="4.5" fill="none" stroke="#d4a017" stroke-width="1.5"/>
+  <circle cx="28.8" cy="12" r="2.35" fill="#f0c14b"/>
+  <path d="M13.4 27.2Q20 31.5 26.6 27.2" fill="none" stroke="#d4a017" stroke-width="1.7" stroke-linecap="round"/>
+</svg>

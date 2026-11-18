@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <meta name="theme-color" content="#073047" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <link rel="apple-touch-icon" href="/assets/pwa/icon-192.png" />
+    <link rel="icon" href="assets/logo-mark.svg" type="image/svg+xml" id="favicon" />
+    <title data-auth-title-base="Sign in">Sign in — Locus</title>
+    <script src="js/config-override.js"></script>
+    <script src="js/pwa-register.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;800&family=IBM+Plex+Sans:wght@400;500;600&family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="css/app-themes.css" />
+    <link rel="stylesheet" href="styles.css" />
+    <link rel="stylesheet" href="css/auth-page.css" />
+</head>
+<body class="auth-page auth-page--onecallaccess">
+    <script src="js/auth-branding.js"></script>
+    <div class="onecall-access">
+        <div class="onecall-access__bg" aria-hidden="true"></div>
+        <div class="onecall-panel">
+            <header class="onecall-panel__brand">
+                <div class="onecall-panel__brand-lines" aria-hidden="true"></div>
+                <div class="onecall-panel__logo-wrap">
+                    <img class="onecall-panel__logo" data-auth-brand="logo-img" src="assets/logo-mark.svg" width="40" height="40" alt="Locus" decoding="async" />
+                    <span class="onecall-panel__logo-word" data-auth-brand="logo-word">LOCUS</span>
+                </div>
+                <p class="onecall-panel__tagline" data-auth-brand="tagline" hidden></p>
+            </header>
+            <div class="onecall-panel__body">
+                <h1 class="onecall-panel__title">Sign in</h1>
+
+                <div class="error-message" id="errorMessage"></div>
+
+                <form class="login-form" id="loginForm">
+                    <div class="onecall-field">
+                        <label class="form-label" for="email">Email</label>
+                        <input
+                            type="email"
+                            id="email"
+                            class="form-input"
+                            placeholder="Enter your email"
+                            required
+                            autocomplete="email"
+                            autocapitalize="off"
+                            spellcheck="false"
+                            enterkeyhint="next"
+                        />
+                    </div>
+
+                    <div class="onecall-field">
+                        <label class="form-label" for="password">Password</label>
+                        <div class="onecall-password-wrap">
+                            <input
+                                type="password"
+                                id="password"
+                                class="form-input"
+                                placeholder="Enter your password"
+                                required
+                                autocomplete="current-password"
+                                enterkeyhint="go"
+                            />
+                            <button
+                                type="button"
+                                class="onecall-password-toggle"
+                                data-onecall-password-toggle
+                                aria-controls="password"
+                                aria-pressed="false"
+                                aria-label="Show password"
+                            >Show</button>
+                        </div>
+                    </div>
+
+                    <div class="onecall-terms">
+                        <input type="checkbox" id="acceptTerms" required />
+                        <label for="acceptTerms">I agree to the <a href="privacy-policy.html">Privacy Policy</a></label>
+                    </div>
+
+                    <div class="remember-me">
+                        <input type="checkbox" id="rememberMe" />
+                        <label for="rememberMe">Remember me</label>
+                    </div>
+
+                    <button type="submit" class="login-button" id="loginButton">
+                        Log in
+                    </button>
+                </form>
+
+                <div class="forgot-password">
+                    <a href="forgot-password.html">Forgot your password?</a>
+                </div>
+            </div>
+        </div>
+        <p class="onecall-powered">Powered by <strong data-auth-brand="powered-name">Locus</strong></p>
+    </div>
+
+    <div class="modal-overlay" id="appDialogOverlay" style="display: none;" aria-hidden="true" role="dialog" aria-modal="true">
+        <div class="modal-content" onclick="event.stopPropagation()" style="max-width: 520px;">
+            <div class="modal-header">
+                <h2 class="modal-title" id="appDialogTitle">Notice</h2>
+                <button type="button" class="modal-close" id="appDialogCloseBtn" aria-label="Close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div id="appDialogMessage" class="app-dialog-message"></div>
+                <div id="appDialogInputWrap" style="display: none; margin-top: 1rem;">
+                    <input type="search" id="appDialogInput" name="app-dialog-field" inputmode="text" enterkeyhint="done" autocomplete="off" autocapitalize="words" spellcheck="true" data-lpignore="true" data-form-type="other" class="app-dialog-input" />
+                    <textarea id="appDialogTextarea" style="display: none;" rows="4" autocomplete="off" data-lpignore="true" data-form-type="other" class="app-dialog-textarea"></textarea>
+                </div>
+                <div class="modal-actions" id="appDialogActions" style="display: flex; gap: 0.5rem; justify-content: flex-end; margin-top: 1.5rem; flex-wrap: wrap;"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/auth-onecall-ui.js"></script>
+    <script src="js/app-login.bundle.js"></script>
+    <script>
+        (async function () {
+            if (window.__pwaBootReady) {
+                await window.__pwaBootReady;
+            }
+
+            const loginForm = document.getElementById('loginForm');
+            const errorMessage = document.getElementById('errorMessage');
+            const loginButton = document.getElementById('loginButton');
+
+            if (window.CORE_PRODUCT === true) {
+                const termsRow = document.querySelector('.onecall-terms');
+                const acceptTermsField = document.getElementById('acceptTerms');
+                if (termsRow) termsRow.hidden = true;
+                if (acceptTermsField) {
+                    acceptTermsField.required = false;
+                    acceptTermsField.removeAttribute('required');
+                }
+            }
+
+            function showError(message) {
+                errorMessage.textContent = message;
+                errorMessage.classList.add('show');
+                setTimeout(() => {
+                    errorMessage.classList.remove('show');
+                }, 5000);
+            }
+
+            function hideError() {
+                errorMessage.classList.remove('show');
+            }
+
+            loginForm.addEventListener('submit', async function (e) {
+                e.preventDefault();
+                hideError();
+
+                const email = document.getElementById('email').value.trim();
+                const password = document.getElementById('password').value;
+                const rememberMe = document.getElementById('rememberMe').checked;
+                const acceptTermsEl = document.getElementById('acceptTerms');
+                const requirePrivacy = window.CORE_PRODUCT !== true;
+
+                if (requirePrivacy && acceptTermsEl && !acceptTermsEl.checked) {
+                    showError('Please accept the Privacy Policy to continue.');
+                    return;
+                }
+
+                if (!email || !password) {
+                    showError('Please enter both email and password');
+                    return;
+                }
+
+                if (window.setLoginButtonBusy) {
+                    window.setLoginButtonBusy(loginButton, true, 'Logging in…');
+                } else {
+                    loginButton.disabled = true;
+                    loginButton.textContent = 'Logging in…';
+                }
+
+                let loginSucceeded = false;
+                try {
+                    const result = await window.authModule.login(email, password);
+
+                    if (result.success) {
+                        loginSucceeded = true;
+                        if (rememberMe) {
+                            localStorage.setItem('rememberMe', 'true');
+                        } else {
+                            localStorage.removeItem('rememberMe');
+                        }
+
+                        window.location.href = 'index.html';
+                    } else {
+                        showError(result.error || 'Invalid credentials');
+                    }
+                } catch (error) {
+                    showError(error.message || 'An error occurred. Please try again.');
+                } finally {
+                    if (loginSucceeded) return;
+                    if (window.setLoginButtonBusy) {
+                        window.setLoginButtonBusy(loginButton, false, 'Log in');
+                    } else {
+                        loginButton.disabled = false;
+                        loginButton.textContent = 'Log in';
+                    }
+                }
+            });
+
+            if (window.authModule && window.authModule.isAuthenticated()) {
+                window.location.href = 'index.html';
+            }
+        })();
+    </script>
+</body>
+</html>

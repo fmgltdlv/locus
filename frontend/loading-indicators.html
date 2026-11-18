@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en" class="app-theme-default">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, nofollow">
+    <link rel="icon" href="/assets/logo-mark.svg" type="image/svg+xml" />
+    <title>Loading indicator samples — Locus</title>
+    <link rel="stylesheet" href="/css/app-themes.css" />
+    <link rel="stylesheet" href="/css/loading-indicators-demo.css" />
+</head>
+<body class="loading-indicators-page">
+    <header class="loading-indicators-header">
+        <h1>Loading indicator samples</h1>
+        <p>
+            Eight theme-specific panel loaders using Core design tokens (<code>--app-accent</code>, borders, surfaces).
+            Each UI theme maps to one loader; the app remembers your theme on login and reload.
+        </p>
+        <div class="loading-indicators-toolbar">
+            <label>
+                Theme
+                <select id="themeSelect" aria-label="Preview theme">
+                    <option value="app-theme-default">Default (dark)</option>
+                    <option value="app-theme-glass">Glass</option>
+                    <option value="app-theme-outline">Outline</option>
+                    <option value="app-theme-ember">Ember</option>
+                    <option value="app-theme-slate">Slate</option>
+                    <option value="app-theme-blueprint">Blueprint</option>
+                    <option value="app-theme-contractor">Contractor</option>
+                    <option value="app-theme-console">Console</option>
+                    <option value="app-theme-landoffice">Land Office</option>
+                    <option value="app-theme-modern">Modern</option>
+                </select>
+            </label>
+            <label>
+                Size
+                <select id="sizeSelect" aria-label="Preview size">
+                    <option value="">Default</option>
+                    <option value="ayw-loader--sm">Small</option>
+                    <option value="ayw-loader--lg">Large</option>
+                </select>
+            </label>
+        </div>
+    </header>
+
+    <section class="loading-indicators-theme-map" aria-labelledby="themeMapTitle">
+        <h2 id="themeMapTitle">Theme assignment (production)</h2>
+        <p class="loading-indicators-theme-map-intro">
+            When you change UI theme in Settings, panel loaders switch automatically. Your last theme is restored on reload and login.
+            Map boot overlay uses the dipole-field loader. Organization switch overlays follow the theme assignment.
+        </p>
+        <div class="loading-indicators-theme-map-preview" id="themeMapPreview" aria-live="polite">
+            <div class="loading-indicators-theme-map-preview-stage" id="themeMapPreviewStage"></div>
+            <p class="loading-indicators-theme-map-preview-label" id="themeMapPreviewLabel"></p>
+        </div>
+        <table class="loading-indicators-theme-table">
+            <thead>
+                <tr>
+                    <th scope="col">Theme</th>
+                    <th scope="col">Loader</th>
+                </tr>
+            </thead>
+            <tbody id="themeMapBody"></tbody>
+        </table>
+    </section>
+
+    <main class="loading-indicators-grid" id="loaderGrid">
+        <article class="loading-indicators-card" data-loader="bar-pulse">
+            <div class="loading-indicators-card-stage">
+                <div class="ayw-loader ayw-loader--bar-pulse" role="status" aria-label="Loading">
+                    <span></span><span></span><span></span><span></span><span></span>
+                </div>
+            </div>
+            <div>
+                <h2>1. Bar pulse wave</h2>
+                <p>Five bars scale in a left-to-right wave — assigned to <strong>Slate</strong> and <strong>Land Office</strong>.</p>
+            </div>
+        </article>
+
+        <article class="loading-indicators-card" data-loader="dots-revolve">
+            <div class="loading-indicators-card-stage">
+                <div class="ayw-loader ayw-loader--dots-revolve" role="status" aria-label="Loading">
+                    <span></span><span></span><span></span><span></span>
+                    <span></span><span></span><span></span><span></span>
+                </div>
+            </div>
+            <div>
+                <h2>2. Revolving dots</h2>
+                <p>Eight dots chase around a ring — assigned to <strong>Outline</strong> and <strong>Modern</strong>.</p>
+            </div>
+        </article>
+
+        <article class="loading-indicators-card" data-loader="dual-ring">
+            <div class="loading-indicators-card-stage">
+                <div class="ayw-loader ayw-loader--dual-ring" role="status" aria-label="Loading"></div>
+            </div>
+            <div>
+                <h2>3. Dual ring counter-rotate</h2>
+                <p>Nested rings spin in opposite directions — assigned to <strong>Blueprint</strong>.</p>
+            </div>
+        </article>
+
+        <article class="loading-indicators-card" data-loader="orbit">
+            <div class="loading-indicators-card-stage">
+                <div class="ayw-loader ayw-loader--orbit" role="status" aria-label="Loading">
+                    <span></span><span></span><span></span>
+                </div>
+            </div>
+            <div>
+                <h2>4. Orbit dots</h2>
+                <p>Pulsing center with orbiting satellites — assigned to <strong>Glass</strong>.</p>
+            </div>
+        </article>
+
+        <article class="loading-indicators-card" data-loader="arc">
+            <div class="loading-indicators-card-stage">
+                <div class="ayw-loader ayw-loader--arc" role="status" aria-label="Loading"></div>
+            </div>
+            <div>
+                <h2>5. Gradient arc spinner</h2>
+                <p>Soft conic-gradient sweep — assigned to <strong>Default</strong>.</p>
+            </div>
+        </article>
+
+        <article class="loading-indicators-card" data-loader="bar-bounce">
+            <div class="loading-indicators-card-stage">
+                <div class="ayw-loader ayw-loader--bar-bounce" role="status" aria-label="Loading">
+                    <span></span><span></span><span></span><span></span><span></span>
+                </div>
+            </div>
+            <div>
+                <h2>6. Bouncing bars</h2>
+                <p>Five bars bounce vertically — assigned to <strong>Ember</strong>.</p>
+            </div>
+        </article>
+
+        <article class="loading-indicators-card" data-loader="dna">
+            <div class="loading-indicators-card-stage">
+                <div class="ayw-loader ayw-loader--dna" role="status" aria-label="Loading">
+                    <span></span><span></span><span></span><span></span><span></span><span></span>
+                </div>
+            </div>
+            <div>
+                <h2>7. DNA wave dots</h2>
+                <p>Six dots alternate in a sine wave — assigned to <strong>Console</strong>.</p>
+            </div>
+        </article>
+
+        <article class="loading-indicators-card" data-loader="morph-square">
+            <div class="loading-indicators-card-stage">
+                <div class="ayw-loader ayw-loader--morph-square" role="status" aria-label="Loading"></div>
+            </div>
+            <div>
+                <h2>8. Morphing square</h2>
+                <p>Square morphs while rotating — assigned to <strong>Contractor</strong>.</p>
+            </div>
+        </article>
+    </main>
+
+    <section class="loading-indicators-compare" aria-label="Compare with legacy spinner">
+        <h2>Compare with legacy panel spinner</h2>
+        <div class="loading-indicators-compare-row">
+            <div class="loading-indicators-compare-item">
+                <div class="loading-indicators-legacy-spinner" aria-hidden="true"></div>
+                <span>Legacy border ring</span>
+            </div>
+            <div class="loading-indicators-compare-item">
+                <div class="ayw-loader ayw-loader--arc" role="status" aria-label="Loading"></div>
+                <span>Default theme (arc)</span>
+            </div>
+        </div>
+    </section>
+
+    <script>
+        (function () {
+            var THEME_LOADER_MAP = {
+                default: 'arc',
+                glass: 'orbit',
+                outline: 'dots-revolve',
+                ember: 'bar-bounce',
+                slate: 'bar-pulse',
+                blueprint: 'dual-ring',
+                contractor: 'morph-square',
+                console: 'dna',
+                landoffice: 'bar-pulse',
+                modern: 'dots-revolve'
+            };
+
+            var LOADER_SPANS = {
+                'bar-pulse': 5,
+                'dots-revolve': 8,
+                orbit: 3,
+                'bar-bounce': 5,
+                dna: 6
+            };
+
+            var THEME_LABELS = {
+                default: 'Default',
+                glass: 'Glass',
+                outline: 'Outline',
+                ember: 'Ember',
+                slate: 'Slate',
+                blueprint: 'Blueprint',
+                contractor: 'Contractor',
+                console: 'Console',
+                landoffice: 'Land Office',
+                modern: 'Modern'
+            };
+
+            var root = document.documentElement;
+            var themeSelect = document.getElementById('themeSelect');
+            var sizeSelect = document.getElementById('sizeSelect');
+            var loaders = document.querySelectorAll('.ayw-loader');
+            var themeMapBody = document.getElementById('themeMapBody');
+            var themeMapPreviewStage = document.getElementById('themeMapPreviewStage');
+            var themeMapPreviewLabel = document.getElementById('themeMapPreviewLabel');
+
+            var themes = [
+                'app-theme-default',
+                'app-theme-glass',
+                'app-theme-outline',
+                'app-theme-ember',
+                'app-theme-slate',
+                'app-theme-blueprint',
+                'app-theme-contractor',
+                'app-theme-console',
+                'app-theme-landoffice',
+                'app-theme-modern'
+            ];
+
+            function themeKeyFromClass(className) {
+                return className.replace('app-theme-', '');
+            }
+
+            function buildLoaderHtml(variant) {
+                var spanCount = LOADER_SPANS[variant];
+                var spans = '';
+                if (spanCount) {
+                    for (var i = 0; i < spanCount; i++) {
+                        spans += '<span></span>';
+                    }
+                }
+                return '<div class="ayw-loader ayw-loader--' + variant + '" role="status" aria-label="Loading">' + spans + '</div>';
+            }
+
+            function renderThemeTable() {
+                themeMapBody.innerHTML = '';
+                Object.keys(THEME_LOADER_MAP).forEach(function (themeKey) {
+                    var row = document.createElement('tr');
+                    var themeCell = document.createElement('td');
+                    var loaderCell = document.createElement('td');
+                    themeCell.textContent = THEME_LABELS[themeKey] || themeKey;
+                    loaderCell.textContent = 'ayw-loader--' + THEME_LOADER_MAP[themeKey];
+                    row.appendChild(themeCell);
+                    row.appendChild(loaderCell);
+                    themeMapBody.appendChild(row);
+                });
+            }
+
+            function updateThemePreview() {
+                var themeKey = themeKeyFromClass(themeSelect.value);
+                var variant = THEME_LOADER_MAP[themeKey] || 'arc';
+                themeMapPreviewStage.innerHTML = buildLoaderHtml(variant);
+                themeMapPreviewLabel.textContent =
+                    (THEME_LABELS[themeKey] || themeKey) + ' → ayw-loader--' + variant;
+            }
+
+            renderThemeTable();
+            updateThemePreview();
+
+            themeSelect.addEventListener('change', function () {
+                themes.forEach(function (t) { root.classList.remove(t); });
+                root.classList.add(themeSelect.value);
+                updateThemePreview();
+            });
+
+            sizeSelect.addEventListener('change', function () {
+                var sizeClass = sizeSelect.value;
+                loaders.forEach(function (el) {
+                    el.classList.remove('ayw-loader--sm', 'ayw-loader--lg');
+                    if (sizeClass) el.classList.add(sizeClass);
+                });
+            });
+        })();
+    </script>
+</body>
+</html>

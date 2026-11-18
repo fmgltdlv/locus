@@ -1,0 +1,80 @@
+/* App styles — split into partials for maintainability; order matters. */
+@import url("styles/partials/_00-checkbox.css");
+@import url("styles/partials/_00-mobile-touch.css");
+@import url("styles/partials/_00-overlay-scroll.css");
+@import url("styles/partials/_00-base.css");
+@import url("styles/partials/_core-product.css");
+@import url("styles/partials/_01-navbar-through-profile-modals.css");
+@import url("styles/partials/_01b-map-top-left-controls.css");
+@import url("styles/partials/_01c-map-status-filters.css");
+@import url("styles/partials/_02-map-search-time-aerial-leaflet.css");
+@import url("styles/partials/_03-sidebar-drawing-photos-measure.css");
+@import url("styles/partials/_04-ticket-popup-list-cards-mobile.css");
+@import url("styles/partials/_05-data-window-ticket-hub.css");
+@import url("styles/partials/_12-loading-indicators.css");
+@import url("styles/partials/_06-pdf-utilities-manage-aerial.css");
+@import url("styles/partials/_07-renewal-ux-mock.css");
+@import url("styles/partials/_08-create-ticket-wizard.css");
+@import url("styles/partials/_10-dirt-report.css");
+@import url("styles/partials/_11-guided-tour.css");
+
+/* Desktop Ticket Hub: last in this file so it wins over imported partials. */
+@media (min-width: 769px) {
+    html {
+        --ticket-hub-dock-inset-left: var(--ticket-hub-sidebar-width, 548px);
+    }
+
+    #ticketHubWindow.ticket-hub-window.show.ticket-hub-window--sheet-open {
+        overflow: visible !important;
+    }
+
+    #ticketHubWindow.ticket-hub-window,
+    #ticketHubWindow.ticket-hub-window.show,
+    #ticketHubWindow.ticket-hub-window.ticket-hub-window--dock-left,
+    #ticketHubWindow.ticket-hub-window.ticket-hub-window--dock-float,
+    #ticketHubWindow.ticket-hub-window.ticket-hub-window--dock-bottom {
+        display: flex !important;
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        right: auto !important;
+        bottom: 0 !important;
+        transform: none !important;
+        margin: 0 !important;
+        width: var(--ticket-hub-sidebar-width, 548px) !important;
+        max-width: min(920px, calc(100vw - 240px)) !important;
+        height: 100% !important;
+        max-height: 100vh !important;
+        min-height: 0 !important;
+        border-radius: 0 !important;
+        border: none !important;
+        border-right: 1px solid var(--app-border) !important;
+        box-shadow: 4px 0 16px rgba(0, 0, 0, 0.18) !important;
+    }
+
+    .map-container {
+        left: var(--ticket-hub-dock-inset-left, 548px) !important;
+        right: 0 !important;
+    }
+
+    #mapStatusFilters,
+    .map-status-filters {
+        display: none !important;
+        visibility: hidden !important;
+        pointer-events: none !important;
+        opacity: 0 !important;
+    }
+
+    #ticketHubOpenButton,
+    #mapLayerControlToggle,
+    .leaflet-control-layer-toggle,
+    #createTicketTool,
+    .create-ticket-btn,
+    #ticketHubCreateTicketBtn,
+    #mobileCreateTicketButton,
+    #mobileLayersButton,
+    #mapFeedbackButton,
+    .map-feedback-button {
+        display: none !important;
+    }
+}

@@ -1,0 +1,1 @@
+ALTER TABLE media_files ADD COLUMN is_public INTEGER NOT NULL DEFAULT 0;

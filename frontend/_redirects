@@ -1,0 +1,4 @@
+# Path-style share links must win over Pages' automatic SPA fallback to /index.html.
+# First match wins — keep /share/* above any catch-all.
+/share/*  /share/index.html  200
+/share    /share/index.html  200

@@ -1,0 +1,23 @@
+{
+  "rewrites": [
+    {
+      "source": "/share",
+      "destination": "/share/index.html"
+    },
+    {
+      "source": "/share/:token",
+      "destination": "/share/index.html"
+    }
+  ],
+  "headers": [
+    {
+      "source": "**/*",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-cache, no-store, must-revalidate"
+        }
+      ]
+    }
+  ]
+}

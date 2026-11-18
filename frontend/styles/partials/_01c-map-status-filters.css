@@ -1,0 +1,401 @@
+/* Desktop map top status filter bar (mirrors Ticket Hub stat cards) */
+
+html.app-public-catalog-viewer .map-status-filters {
+    display: none !important;
+}
+
+/* Reparented to `body` (see ensureMapHubOverlaysOnBody) — fixed so it stacks above Ticket/Data Hub. */
+.map-status-filters {
+    position: fixed;
+    top: max(12px, env(safe-area-inset-top, 0px));
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 60500;
+    pointer-events: none;
+    width: max-content;
+    max-width: calc(100vw - 2 * max(220px, calc(12px + env(safe-area-inset-left, 0px) + 200px)) - 16px);
+}
+
+.map-status-filters-bar {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.15rem;
+    min-height: 0;
+    padding: 0.18rem 0.22rem;
+    pointer-events: auto;
+    width: max-content;
+    max-width: 100%;
+    background: color-mix(in srgb, var(--app-bg-elevated) 92%, transparent);
+    border: 1px solid var(--app-border);
+    border-radius: 0.55rem;
+    box-shadow: 0 2px 8px var(--app-shadow-lg);
+    color: var(--app-text-primary);
+}
+
+.map-status-filters-bar-main {
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: stretch;
+    gap: 0.35rem;
+    min-width: 0;
+    max-width: 100%;
+}
+
+.map-status-action-btns {
+    display: flex;
+    flex-direction: row;
+    gap: 0.35rem;
+    flex-shrink: 0;
+    align-self: stretch;
+    align-items: stretch;
+    min-width: 0;
+}
+
+.map-status-action-btn {
+    flex: 1 1 0;
+    min-height: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    padding: 0 0.55rem;
+    border: 1px solid var(--app-border);
+    border-radius: 0.4rem;
+    background: var(--app-bg-muted);
+    color: var(--app-text-primary);
+    font-size: 0.9rem;
+    font-weight: 600;
+    line-height: 1.1;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+/* Same footprint as .map-status-stats-expand (placed in the same stats grid row). */
+.map-status-action-btn--icon {
+    width: 2rem;
+    min-width: 2rem;
+    max-width: 2rem;
+    padding: 0;
+}
+
+.map-status-action-btn--icon svg {
+    pointer-events: none;
+    display: block;
+    width: 1rem;
+    height: 1rem;
+}
+
+.map-status-action-btn:hover {
+    background: var(--app-bg-hover);
+}
+
+.map-status-action-btn--active {
+    border-color: var(--app-accent);
+    background: var(--app-accent);
+    color: var(--app-button-primary-text, #fff);
+}
+
+.map-status-filters-stats.ticket-hub-stats,
+.map-status-filters-stats {
+    display: inline-flex;
+    flex-wrap: nowrap;
+    align-items: stretch;
+    align-self: stretch;
+    gap: 0.5rem;
+    padding: 0;
+    margin: 0;
+    border: none;
+    background: transparent;
+    pointer-events: auto;
+    width: max-content;
+    max-width: 100%;
+    min-height: 0;
+    overflow: visible;
+}
+
+.map-status-filters-stats .ticket-hub-stats-primary-row.app-overlay-scroll-x {
+    min-width: 0;
+}
+
+.map-status-filters-stats.ticket-hub-stats .ticket-hub-stat-card,
+.map-status-filters-stats .ticket-hub-stat-card {
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-self: stretch;
+    height: 100%;
+    min-width: 5rem;
+    padding: 0 0.55rem;
+    box-sizing: border-box;
+}
+
+.map-status-filters-stats .ticket-hub-stat-label {
+    font-size: 0.75rem;
+    line-height: 1.1;
+}
+
+.map-status-filters-stats .ticket-hub-stat-value {
+    font-size: 1.125rem;
+    line-height: 1.1;
+}
+
+/* Dropdown panels anchored under the bar */
+.map-status-dropdown {
+    position: absolute;
+    top: calc(100% + 6px);
+    left: 0;
+    z-index: 60501;
+    pointer-events: auto;
+    max-width: min(92vw, 30rem);
+    max-height: min(70vh, 32rem);
+    padding: 0.55rem 0.65rem;
+    background: var(--app-bg-surface-2);
+    border: 1px solid var(--app-border);
+    border-radius: 0.5rem;
+    box-shadow: 0 8px 24px var(--app-shadow-lg);
+    color: var(--app-text-primary);
+}
+
+.map-status-dropdown[hidden] {
+    display: none;
+}
+
+.map-status-dropdown-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    margin-bottom: 0.35rem;
+}
+
+.map-status-dropdown-title {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--app-text-primary);
+}
+
+#mapStatusFiltersDropdown .ticket-hub-search-wrap {
+    margin: 0;
+    width: 100%;
+    min-width: 0;
+    flex: none;
+}
+
+#mapStatusFiltersDropdown .ticket-hub-filters-pack {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    width: 100%;
+}
+
+/* Fields use flex-basis as width in the hub toolbar; in this column pack that
+   basis becomes height and leaves huge empty gaps — lock them to content height. */
+#mapStatusFiltersDropdown .ticket-hub-field,
+#mapStatusFiltersDropdown .ticket-hub-search-wrap,
+#mapStatusFiltersDropdown .ticket-hub-date-fields,
+#mapStatusFiltersDropdown .ticket-hub-map-tools-row {
+    flex: 0 0 auto;
+    min-height: 0;
+    min-width: 0;
+    max-width: none;
+    width: 100%;
+    align-self: stretch;
+}
+
+#mapStatusFiltersDropdown .ticket-hub-date-fields,
+#mapStatusFiltersDropdown .ticket-hub-map-tools-row {
+    gap: 0.35rem;
+}
+
+/* Date row is horizontal; .ticket-hub-field above sets width:100% and hides the To picker. */
+#mapStatusFiltersDropdown .ticket-hub-date-fields {
+    flex-wrap: wrap;
+}
+
+#mapStatusFiltersDropdown .ticket-hub-date-fields .ticket-hub-date-field {
+    flex: 1 1 calc(50% - 0.175rem);
+    width: auto;
+    min-width: 7.5rem;
+    max-width: none;
+}
+
+#mapStatusFiltersDropdown .ticket-hub-input,
+#mapStatusFiltersDropdown .ticket-hub-select {
+    padding: 0.35rem 0.5rem;
+    font-size: 0.78rem;
+    line-height: 1.25;
+}
+
+/* Expand/collapse toggle for the secondary stat tier */
+.map-status-stats-expand {
+    flex-shrink: 0;
+    align-self: stretch;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2rem;
+    min-height: 0;
+    border: 1px solid var(--app-border);
+    border-radius: 0.4rem;
+    background: var(--app-bg-muted);
+    color: var(--app-text-primary);
+    font-size: 0.94rem;
+    font-weight: 700;
+    line-height: 1;
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+}
+
+.map-status-stats-expand-icon {
+    display: inline-block;
+    font-size: 0.7rem;
+    line-height: 1;
+    opacity: 0.85;
+}
+
+.map-status-stats-expand:hover {
+    background: var(--app-bg-hover);
+}
+
+/* When collapsed, hide the secondary tier cards in any stats container */
+.map-status-stats-collapsed .ticket-hub-stat-secondary {
+    display: none !important;
+}
+
+.map-status-stats-collapsed .ticket-hub-stats-extra-row {
+    display: none !important;
+}
+
+@media (min-width: 769px) {
+    .map-status-filters-stats.ticket-hub-stats {
+        display: grid;
+        grid-template-columns: auto 1fr auto;
+        grid-template-areas:
+            'search primary expand'
+            'extra extra extra';
+        column-gap: 0.35rem;
+        row-gap: 0.5rem;
+        flex-direction: unset;
+        flex-wrap: unset;
+        align-items: stretch;
+        overflow-x: visible;
+        overflow-y: visible;
+        width: max-content;
+        max-width: 100%;
+    }
+
+    /* Search + USAN status (nested in .map-status-action-btns) share primary-row height. */
+    .map-status-filters-stats > .map-status-action-btns {
+        grid-area: search;
+        align-self: stretch;
+    }
+
+    .map-status-filters-stats .ticket-hub-stats-primary-row {
+        grid-area: primary;
+        display: flex;
+        flex-wrap: nowrap;
+        align-items: stretch;
+        gap: 0.5rem;
+        width: 100%;
+        min-height: 0;
+        min-width: 0;
+    }
+
+    .map-status-filters-stats .map-status-stats-expand {
+        grid-area: expand;
+        align-self: stretch;
+    }
+
+    .map-status-filters-stats .ticket-hub-stats-extra-row {
+        grid-area: extra;
+        display: flex;
+        flex-direction: row;
+        flex-wrap: wrap;
+        align-items: stretch;
+        gap: 0.5rem;
+        width: 100%;
+    }
+
+    .map-status-filters-stats .ticket-hub-stats-extra-row .ticket-hub-stat-card {
+        height: auto;
+        align-self: stretch;
+        flex: 0 0 auto;
+    }
+}
+
+/* Narrow desktop / tablet: more bar budget, tighter chips, clean label ellipsis */
+@media (max-width: 1180px) and (min-width: 769px) {
+    .map-status-filters {
+        max-width: calc(100vw - 2 * max(160px, calc(12px + env(safe-area-inset-left, 0px) + 140px)) - 16px);
+    }
+
+    .map-status-filters-stats.ticket-hub-stats .ticket-hub-stat-card,
+    .map-status-filters-stats .ticket-hub-stat-card {
+        min-width: 3.75rem;
+        padding: 0 0.35rem;
+    }
+
+    .map-status-filters-stats .ticket-hub-stats-primary-row {
+        gap: 0.3rem;
+    }
+
+    .map-status-filters-stats .ticket-hub-stat-label {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        max-width: 100%;
+        font-size: 0.68rem;
+    }
+
+    .map-status-filters-stats .ticket-hub-stat-value {
+        font-size: 1rem;
+    }
+}
+
+/* Ticket filters are irrelevant while Data Hub is open; bar also stacks above that window. */
+body:has(#dataWindow.show) .map-status-filters {
+    display: none !important;
+}
+
+@media (max-width: 768px) {
+    .map-status-filters {
+        display: none !important;
+    }
+}
+
+/* Right-click (desktop) / press-and-hold (mobile) before fitting map to a status bubble's tickets */
+.hub-stat-reset-zoom-menu {
+    position: fixed;
+    z-index: 60600;
+    padding: 0.2rem;
+    background: color-mix(in srgb, var(--app-bg-elevated) 94%, transparent);
+    border: 1px solid var(--app-border);
+    border-radius: 0.45rem;
+    box-shadow: 0 4px 14px var(--app-shadow-lg);
+    color: var(--app-text-primary);
+}
+
+.hub-stat-reset-zoom-btn {
+    display: block;
+    width: 100%;
+    margin: 0;
+    padding: 0.4rem 0.75rem;
+    border: 1px solid var(--app-border);
+    border-radius: 0.35rem;
+    background: var(--app-bg-muted);
+    color: var(--app-text-primary);
+    font-size: 0.85rem;
+    font-weight: 600;
+    line-height: 1.2;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.hub-stat-reset-zoom-btn:hover {
+    background: var(--app-bg-hover);
+    border-color: var(--app-accent);
+}

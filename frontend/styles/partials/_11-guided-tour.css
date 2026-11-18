@@ -1,0 +1,122 @@
+/* First-run guided tour spotlight overlay + tooltip card */
+
+.guided-tour-root {
+    position: fixed;
+    inset: 0;
+    z-index: 100010;
+    pointer-events: none;
+}
+
+.guided-tour-root--active {
+    pointer-events: auto;
+}
+
+.guided-tour-overlay-svg {
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: auto;
+}
+
+.guided-tour-card {
+    position: fixed;
+    z-index: 100011;
+    max-width: 360px;
+    width: calc(100% - 2rem);
+    background: var(--app-surface, #fff);
+    color: var(--app-text, #0f172a);
+    border: 1px solid var(--app-border, #e2e8f0);
+    border-radius: 0.65rem;
+    box-shadow: 0 12px 40px rgba(7, 48, 71, 0.22);
+    padding: 1rem 1.1rem 1rem;
+    pointer-events: auto;
+}
+
+.guided-tour-card--center {
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: min(360px, calc(100% - 2rem));
+}
+
+.guided-tour-progress {
+    font-size: 0.75rem;
+    color: var(--app-text-secondary, #64748b);
+    margin: 0 0 0.35rem;
+}
+
+.guided-tour-title {
+    font-size: 1.05rem;
+    font-weight: 600;
+    margin: 0 0 0.5rem;
+    color: var(--app-text, #0f172a);
+}
+
+.guided-tour-body {
+    font-size: 0.875rem;
+    line-height: 1.5;
+    margin: 0 0 1rem;
+    color: var(--app-text-secondary, #475569);
+}
+
+.guided-tour-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.5rem;
+}
+
+.guided-tour-btn {
+    padding: 0.45rem 0.85rem;
+    border-radius: 0.35rem;
+    font-size: 0.8125rem;
+    font-weight: 500;
+    cursor: pointer;
+    border: 1px solid transparent;
+}
+
+.guided-tour-btn--primary {
+    background: #073047;
+    color: #fff;
+    border-color: #073047;
+}
+
+.guided-tour-btn--primary:hover {
+    background: #0a4060;
+}
+
+.guided-tour-btn--secondary {
+    background: #f8fafc;
+    color: var(--app-text, #0f172a);
+    border-color: #cbd5e1;
+}
+
+.guided-tour-btn--ghost {
+    background: transparent;
+    color: var(--app-text-secondary, #64748b);
+    border-color: transparent;
+    margin-right: auto;
+}
+
+.guided-tour-btn--ghost:hover {
+    color: var(--app-text, #0f172a);
+}
+
+.guided-tour-highlight-target {
+    position: relative;
+    z-index: 100009 !important;
+}
+
+@media (max-width: 768px) {
+    .guided-tour-card:not(.guided-tour-card--center) {
+        left: 0.75rem !important;
+        right: 0.75rem !important;
+        bottom: max(0.75rem, env(safe-area-inset-bottom));
+        top: auto !important;
+        transform: none !important;
+        width: auto;
+        max-width: none;
+    }
+}

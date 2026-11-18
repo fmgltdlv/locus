@@ -1,0 +1,6 @@
+{
+  "_comment": "Reference for your Pages deploy. Put apiBaseUrl in frontend/js/config-override.js as window.API_BASE_URL and local dev API as window.DEV_API_BASE_URL.",
+  "apiBaseUrl": "https://your-worker-name.YOUR_SUBDOMAIN.workers.dev",
+  "pagesUrl": "https://your-pages-project.pages.dev",
+  "d1Reference": "Not used by the browser. Your Worker binds D1 in wrangler.toml; see worker/worker-deployment.example.json."
+}

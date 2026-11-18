@@ -1,0 +1,745 @@
+/* Core branch: ticket management only — hide Data Hub, camera, annotations, aerial, dirt. */
+html.core-product {
+    --core-ink: #0b0d10;
+    --core-ink-2: #14171c;
+    --core-panel: #1a1e24;
+    --core-paper: #ece6d8;
+    --core-gold: #d4a017;
+    --core-gold-hot: #f0c14b;
+    --core-gold-dim: rgba(212, 160, 23, 0.22);
+    --core-line: rgba(236, 230, 216, 0.12);
+    --core-mute: #9a9386;
+    --core-text: #ece6d8;
+    --core-status-ready: #4ade80;
+    --core-status-not-ready: #f87171;
+    --core-status-action: #f0c14b;
+    --core-status-expiring: #fb7185;
+    --core-status-neutral: #9a9386;
+    --core-status-chip-bg: #14171c;
+    --core-status-chip-size: 1.7rem;
+}
+
+html.core-product .data-hub-open-button-wrap,
+html.core-product #dataWindow,
+html.core-product #inPageCameraOverlay,
+html.core-product #annotationModal,
+html.core-product #dirtReportModal,
+html.core-product #dirtReportPhotoGalleryModal,
+html.core-product #photoExportProgressOverlay,
+html.core-product #measureDisplay,
+html.core-product #mapTopLeftDataHubFilterBubble,
+html.core-product .core-hidden,
+html.core-product .draw-btn,
+html.core-product .map-tools-mobile-fab,
+html.core-product #mobileMeasureButton,
+html.core-product .overlay-drone-maps,
+html.core-product .overlay-photos,
+html.core-product .clear-layers-button,
+html.core-product .map-tools-mobile-camera-row,
+html.core-product .aerial-maps-panel,
+html.core-product .aerial-maps-panel-fab,
+html.core-product .aerial-maps-panel-backdrop,
+html.core-product .time-warp-panel,
+html.core-product .time-warp-panel-fab {
+    display: none !important;
+}
+
+/*
+ * Core auth: night-ops ticket desk (NOT a recolor of the OneCall split photo).
+ * Select html.core-product — that class lives on <html>, while auth-page--onecallaccess is on <body>.
+ */
+html.core-product body.auth-page {
+    --core-ink: #0b0d10;
+    --core-ink-2: #14171c;
+    --core-panel: #1a1e24;
+    --core-paper: #ece6d8;
+    --core-gold: #d4a017;
+    --core-gold-hot: #f0c14b;
+    --core-gold-dim: rgba(212, 160, 23, 0.22);
+    --core-line: rgba(236, 230, 216, 0.12);
+    --core-mute: #9a9386;
+    --core-text: #ece6d8;
+    font-family: 'IBM Plex Sans', 'Segoe UI', system-ui, sans-serif;
+    background: var(--core-ink);
+    color: var(--core-text);
+}
+
+html.core-product body.auth-page--onecallaccess {
+    background: var(--core-ink);
+    color: var(--core-text);
+}
+
+html.core-product .onecall-access {
+    min-height: 100vh;
+    min-height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem 1rem 2.75rem;
+    box-sizing: border-box;
+}
+
+html.core-product .onecall-access__bg {
+    animation: none !important;
+    background:
+        radial-gradient(ellipse 70% 50% at 50% -10%, rgba(212, 160, 23, 0.14), transparent 55%),
+        linear-gradient(180deg, rgba(11, 13, 16, 0.55) 0%, rgba(11, 13, 16, 0.92) 100%),
+        repeating-linear-gradient(
+            0deg,
+            transparent 0,
+            transparent 47px,
+            rgba(212, 160, 23, 0.07) 47px,
+            rgba(212, 160, 23, 0.07) 48px
+        ),
+        repeating-linear-gradient(
+            90deg,
+            transparent 0,
+            transparent 47px,
+            rgba(212, 160, 23, 0.07) 47px,
+            rgba(212, 160, 23, 0.07) 48px
+        ),
+        repeating-linear-gradient(
+            135deg,
+            transparent 0,
+            transparent 12px,
+            rgba(236, 230, 216, 0.015) 12px,
+            rgba(236, 230, 216, 0.015) 13px
+        ),
+        var(--core-ink) !important;
+    background-size: auto !important;
+    background-position: center !important;
+}
+
+html.core-product .onecall-access__bg::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background:
+        radial-gradient(circle at 18% 72%, rgba(212, 160, 23, 0.08), transparent 18%),
+        radial-gradient(circle at 82% 28%, rgba(212, 160, 23, 0.06), transparent 16%);
+}
+
+html.core-product .onecall-panel {
+    width: min(26.5rem, 100%);
+    max-width: 26.5rem;
+    position: relative;
+    z-index: 1;
+    background: var(--core-panel);
+    border: 1px solid var(--core-gold-dim);
+    box-shadow:
+        0 0 0 1px rgba(11, 13, 16, 0.8),
+        0 28px 64px rgba(0, 0, 0, 0.55),
+        0 0 80px rgba(212, 160, 23, 0.06);
+    animation: coreTicketIn 0.55s ease-out both;
+}
+
+html.core-product .onecall-panel::before {
+    content: '';
+    position: absolute;
+    left: -7px;
+    top: 18%;
+    bottom: 18%;
+    width: 14px;
+    background:
+        radial-gradient(circle, var(--core-ink) 4px, transparent 4.5px) 0 0 / 14px 18px;
+    pointer-events: none;
+}
+
+html.core-product .onecall-panel::after {
+    content: '';
+    position: absolute;
+    inset: 8px;
+    border: 1px dashed rgba(212, 160, 23, 0.18);
+    pointer-events: none;
+}
+
+html.core-product .onecall-panel__brand {
+    position: relative;
+    overflow: visible;
+    padding: 1.65rem 1.75rem 0.85rem;
+    background: transparent !important;
+    border-bottom: none;
+}
+
+html.core-product .onecall-panel__brand-lines {
+    display: none;
+}
+
+html.core-product .onecall-panel__logo-wrap {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+    margin: 0 0 0.7rem;
+    padding: 0;
+    background: transparent;
+    border-radius: 0;
+    box-shadow: none;
+    animation: none;
+}
+
+html.core-product .onecall-panel__logo-wrap::before {
+    content: '';
+    flex: 0 0 2.15rem;
+    width: 2.15rem;
+    height: 2.15rem;
+    box-sizing: border-box;
+    border: 1.5px solid var(--core-gold);
+    background:
+        radial-gradient(circle at 72% 30%, var(--core-gold-hot) 0 3px, transparent 3.2px),
+        radial-gradient(ellipse at 50% 78%, transparent 42%, var(--core-gold) 44%, var(--core-gold) 52%, transparent 54%);
+}
+
+html.core-product [data-auth-brand="logo-img"] {
+    display: none !important;
+}
+
+html.core-product [data-auth-brand="logo-word"] {
+    font-size: 0;
+    line-height: 0;
+    color: transparent;
+}
+
+html.core-product [data-auth-brand="logo-word"]::after {
+    content: 'LOCUS';
+    display: block;
+    font-family: 'Barlow Condensed', 'Arial Narrow', Impact, sans-serif;
+    font-size: 2.35rem;
+    font-weight: 800;
+    letter-spacing: 0.22em;
+    line-height: 0.9;
+    color: var(--core-paper);
+    text-indent: 0.22em;
+    text-transform: uppercase;
+}
+
+html.core-product .onecall-panel__tagline {
+    display: none !important;
+}
+
+html.core-product .onecall-panel__body {
+    padding: 0.35rem 1.75rem 1.75rem;
+    background: transparent;
+    backdrop-filter: none;
+}
+
+html.core-product .onecall-panel__title {
+    margin: 0 0 1.1rem;
+    padding: 0.85rem 0 0;
+    font-family: 'Barlow Condensed', 'Arial Narrow', sans-serif;
+    font-size: 1.55rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--core-paper);
+}
+
+html.core-product .onecall-field {
+    margin-bottom: 0.85rem;
+}
+
+html.core-product .onecall-field .form-label {
+    margin-bottom: 0.4rem;
+    font-size: 0.68rem;
+    font-weight: 600;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--core-mute);
+}
+
+html.core-product .onecall-field .form-input,
+html.core-product .onecall-field textarea.form-input {
+    padding: 0.7rem 0.8rem;
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-size: 0.95rem;
+    color: var(--core-paper);
+    background: var(--core-ink);
+    border: 1px solid var(--core-line);
+    border-radius: 2px;
+}
+
+html.core-product .onecall-field .form-input:hover,
+html.core-product .onecall-field textarea.form-input:hover {
+    border-color: rgba(212, 160, 23, 0.4);
+    background: var(--core-ink);
+}
+
+html.core-product .onecall-field .form-input:focus,
+html.core-product .onecall-field textarea.form-input:focus {
+    border-color: var(--core-gold);
+    box-shadow: 0 0 0 1px var(--core-gold);
+    outline: none;
+    background: var(--core-ink);
+}
+
+html.core-product .onecall-password-wrap {
+    display: flex;
+    align-items: stretch;
+    gap: 0;
+    border: 1px solid var(--core-line);
+    border-radius: 2px;
+    background: var(--core-ink);
+}
+
+html.core-product .onecall-password-wrap:focus-within {
+    border-color: var(--core-gold);
+    box-shadow: 0 0 0 1px var(--core-gold);
+}
+
+html.core-product .onecall-password-wrap .form-input {
+    border: none;
+    box-shadow: none;
+}
+
+html.core-product .onecall-password-wrap .form-input:focus {
+    box-shadow: none;
+}
+
+html.core-product .onecall-password-toggle {
+    margin: 0;
+    padding: 0 0.85rem;
+    color: var(--core-gold);
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+}
+
+html.core-product .onecall-password-toggle:hover {
+    color: var(--core-gold-hot);
+}
+
+html.core-product .onecall-terms,
+html.core-product .remember-me {
+    margin-top: 0.65rem;
+    gap: 0.55rem;
+}
+
+html.core-product .onecall-terms label,
+html.core-product .remember-me label,
+html.core-product .login-help-text {
+    font-size: 0.82rem;
+    color: var(--core-mute);
+}
+
+html.core-product .onecall-terms a,
+html.core-product .forgot-password a,
+html.core-product .onecall-signup-prompt a,
+html.core-product .onecall-link,
+html.core-product .login-legal-footer a {
+    color: var(--core-gold-hot);
+    font-weight: 600;
+    text-decoration: none;
+}
+
+html.core-product .onecall-terms a:hover,
+html.core-product .forgot-password a:hover,
+html.core-product .onecall-signup-prompt a:hover,
+html.core-product .login-legal-footer a:hover {
+    color: var(--core-paper);
+    text-decoration: underline;
+}
+
+html.core-product .onecall-terms input[type='checkbox'],
+html.core-product .remember-me input[type='checkbox'] {
+    accent-color: var(--core-gold);
+}
+
+html.core-product .login-form {
+    gap: 0.35rem;
+}
+
+html.core-product .login-button {
+    margin-top: 1.15rem;
+    width: 100%;
+    padding: 0.9rem 1.25rem;
+    border: none;
+    border-radius: 0;
+    clip-path: polygon(
+        8px 0,
+        calc(100% - 8px) 0,
+        100% 8px,
+        100% calc(100% - 8px),
+        calc(100% - 8px) 100%,
+        8px 100%,
+        0 calc(100% - 8px),
+        0 8px
+    );
+    background: var(--core-gold);
+    color: var(--core-ink);
+    font-family: 'Barlow Condensed', 'Arial Narrow', sans-serif;
+    font-size: 1.05rem;
+    font-weight: 800;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    box-shadow: none;
+}
+
+html.core-product .login-button:not(:disabled):not(.is-busy):hover {
+    background: var(--core-gold-hot);
+    transform: none;
+    filter: none;
+    box-shadow: 0 8px 24px rgba(212, 160, 23, 0.28);
+}
+
+html.core-product .login-button:not(:disabled):active {
+    transform: translateY(1px);
+    box-shadow: none;
+}
+
+html.core-product .login-button:disabled,
+html.core-product .login-button.is-busy:disabled {
+    background: #5c5648;
+    color: #c9c2b4;
+}
+
+html.core-product .login-button--secondary {
+    margin-top: 0.5rem;
+    background: transparent;
+    color: var(--core-paper);
+    border: 1px solid var(--core-line);
+    clip-path: none;
+    letter-spacing: 0.14em;
+}
+
+html.core-product .login-button--secondary:hover {
+    background: rgba(236, 230, 216, 0.06);
+    border-color: var(--core-gold);
+}
+
+html.core-product .error-message {
+    background: rgba(140, 40, 28, 0.28);
+    border: 1px solid rgba(232, 120, 90, 0.45);
+    color: #f3c4b8;
+    border-radius: 2px;
+}
+
+html.core-product .error-message.success {
+    background: rgba(40, 90, 50, 0.28);
+    border-color: rgba(120, 180, 110, 0.4);
+    color: #c5e4bf;
+}
+
+html.core-product .forgot-password,
+html.core-product .onecall-signup-prompt {
+    margin-top: 1rem;
+    text-align: center;
+    font-size: 0.82rem;
+    color: var(--core-mute);
+}
+
+html.core-product .onecall-terms,
+html.core-product .login-legal-footer {
+    display: none !important;
+}
+
+html.core-product .onecall-powered {
+    margin-top: 1.35rem;
+    font-size: 0.68rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: rgba(236, 230, 216, 0.45);
+    text-shadow: none;
+}
+
+html.core-product .onecall-powered strong {
+    font-size: 0;
+    color: transparent;
+}
+
+html.core-product [data-auth-brand="powered-name"]::after {
+    content: 'Locus';
+    font-size: 0.68rem;
+    font-weight: 700;
+    color: var(--core-gold);
+    letter-spacing: 0.18em;
+}
+
+html.core-product body.auth-page--legal .onecall-panel {
+    max-width: 42rem;
+    width: min(42rem, 100%);
+}
+
+html.core-product .legal-content {
+    color: var(--core-text);
+}
+
+html.core-product .legal-content h2 {
+    color: var(--core-paper);
+    font-family: 'Barlow Condensed', 'Arial Narrow', sans-serif;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+
+html.core-product .legal-content a {
+    color: var(--core-gold-hot);
+}
+
+html.core-product .legal-content a:hover {
+    color: var(--core-paper);
+}
+
+html.core-product .legal-content code {
+    background: var(--core-ink);
+    border: 1px solid var(--core-line);
+    color: var(--core-paper);
+}
+
+html.core-product .legal-updated {
+    color: var(--core-mute);
+}
+
+@media (max-width: 640px) {
+    html.core-product .onecall-access {
+        justify-content: flex-start;
+        padding: max(0.75rem, env(safe-area-inset-top, 0px)) 0.85rem
+            calc(1.25rem + env(safe-area-inset-bottom, 0px));
+    }
+
+    html.core-product .onecall-panel {
+        width: 100%;
+        max-width: none;
+    }
+
+    html.core-product .onecall-panel::before {
+        display: none;
+    }
+
+    html.core-product .onecall-panel::after {
+        inset: 6px;
+    }
+
+    html.core-product .onecall-panel__brand {
+        padding: 1.25rem 1.15rem 0.6rem;
+    }
+
+    html.core-product .onecall-panel__body {
+        padding: 0.2rem 1.15rem 1.35rem;
+    }
+
+    html.core-product [data-auth-brand="logo-word"]::after {
+        font-size: 1.85rem;
+        letter-spacing: 0.16em;
+    }
+
+    html.core-product body.auth-page--legal .onecall-panel {
+        max-width: none;
+        width: 100%;
+    }
+}
+
+@keyframes coreTicketIn {
+    from {
+        opacity: 0;
+        transform: translateY(12px) scale(0.985);
+    }
+    to {
+        opacity: 1;
+        transform: none;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    html.core-product .onecall-panel {
+        animation: none;
+    }
+}
+
+/** PWA startup overlay — night-ops shell (inline boot CSS mirrors this when config loads early). */
+html.core-product #pwaBootOverlay {
+    background:
+        radial-gradient(ellipse 70% 50% at 50% -10%, rgba(212, 160, 23, 0.14), transparent 55%),
+        linear-gradient(180deg, rgba(11, 13, 16, 0.55) 0%, rgba(11, 13, 16, 0.92) 100%),
+        #0b0d10;
+    color: #ece6d8;
+    font-family: 'IBM Plex Sans', 'Segoe UI', system-ui, sans-serif;
+}
+
+html.core-product #pwaBootOverlay .pwa-boot-label {
+    font-family: 'Barlow Condensed', 'Arial Narrow', sans-serif;
+    font-size: 1.05rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #ece6d8;
+}
+
+html.core-product #pwaBootOverlay .ayw-loader {
+    --ayw-loader-color: #d4a017;
+}
+
+/*
+ * Core status indicator — one chip for workflow glyphs and text badges
+ * (popup header, responses, operator rows, hub table/cards, overlap pick).
+ */
+html.core-product .ticket-popup-status-indicator,
+html.core-product .ticket-card-status,
+html.core-product .ticket-popup-operator-status-badge,
+html.core-product .ticket-hub-detail-header .ticket-card-status,
+html.core-product .ticket-hub-detail-header .ticket-popup-status-indicator,
+html.core-product .ticket-hub-project-tickets-grid .ticket-card-status,
+html.core-product .ticket-hub-table .ticket-card-status,
+html.core-product .ticket-overlap-pick-btn .ticket-card-status {
+    appearance: none;
+    box-sizing: border-box;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.3rem;
+    margin: 0;
+    flex: 0 0 auto;
+    vertical-align: middle;
+    border: 1px solid var(--core-line);
+    border-radius: 0.3rem;
+    background: var(--core-status-chip-bg);
+    box-shadow: inset 0 0 0 1px rgba(11, 13, 16, 0.45);
+    color: var(--core-paper);
+    font-family: 'Barlow Condensed', 'Arial Narrow', sans-serif;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    line-height: 1;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
+html.core-product .ticket-popup-status-indicator,
+html.core-product .ticket-hub-detail-header .ticket-popup-status-indicator {
+    width: var(--core-status-chip-size);
+    height: var(--core-status-chip-size);
+    min-width: var(--core-status-chip-size);
+    min-height: var(--core-status-chip-size);
+    padding: 0;
+    line-height: 0;
+    color: inherit;
+}
+
+html.core-product span.ticket-popup-status-indicator {
+    cursor: default;
+}
+
+html.core-product button.ticket-popup-status-indicator,
+html.core-product button.ticket-card-status,
+html.core-product button.ticket-popup-operator-status-badge {
+    cursor: pointer;
+}
+
+html.core-product .ticket-card-status,
+html.core-product .ticket-popup-operator-status-badge,
+html.core-product .ticket-hub-detail-header .ticket-card-status,
+html.core-product .ticket-hub-project-tickets-grid .ticket-card-status,
+html.core-product .ticket-hub-table .ticket-card-status,
+html.core-product .ticket-overlap-pick-btn .ticket-card-status {
+    min-height: var(--core-status-chip-size);
+    padding: 0 0.5rem;
+    color: var(--core-paper);
+}
+
+html.core-product .ticket-popup-status-indicator-icon,
+html.core-product .ticket-popup-status-indicator--stop .ticket-popup-status-indicator-icon,
+html.core-product .ticket-popup-header-status-host .ticket-popup-status-indicator--stop .ticket-popup-status-indicator-icon,
+html.core-product .ticket-hub-detail-header .ticket-popup-status-indicator--stop .ticket-popup-status-indicator-icon {
+    width: 1.05rem;
+    height: 1.05rem;
+    display: block;
+    filter: none;
+}
+
+html.core-product .ticket-popup-status-indicator--ready .ticket-popup-status-indicator-icon,
+html.core-product .ticket-popup-status-indicator--expiring .ticket-popup-status-indicator-icon,
+html.core-product .ticket-popup-status-indicator--neutral .ticket-popup-status-indicator-icon {
+    width: 0.62rem;
+    height: 0.62rem;
+    border-radius: 50%;
+}
+
+html.core-product .ticket-popup-status-indicator--ready .ticket-popup-status-indicator-icon {
+    background-color: var(--core-status-ready);
+    box-shadow: 0 0 6px color-mix(in srgb, var(--core-status-ready) 55%, transparent);
+}
+
+html.core-product .ticket-popup-status-indicator--expiring .ticket-popup-status-indicator-icon {
+    background-color: var(--core-status-expiring);
+    box-shadow: 0 0 6px color-mix(in srgb, var(--core-status-expiring) 55%, transparent);
+}
+
+html.core-product .ticket-popup-status-indicator--neutral .ticket-popup-status-indicator-icon {
+    background-color: var(--core-status-neutral);
+}
+
+html.core-product .ticket-popup-status-indicator--warning {
+    color: var(--core-status-action);
+}
+
+html.core-product .ticket-popup-status-indicator--stop {
+    color: var(--core-status-not-ready);
+}
+
+html.core-product .ticket-popup-status-indicator--stop .ticket-popup-status-indicator-icon {
+    filter: drop-shadow(0 0 3px color-mix(in srgb, var(--core-status-not-ready) 55%, transparent));
+}
+
+html.core-product .ticket-card-status.ready,
+html.core-product .ticket-popup-operator-status-badge.ready,
+html.core-product .ticket-hub-detail-header .ticket-card-status.ready,
+html.core-product .ticket-hub-project-tickets-grid .ticket-card-status.ready {
+    color: var(--core-status-ready);
+    background: color-mix(in srgb, var(--core-status-ready) 14%, var(--core-status-chip-bg));
+    border-color: color-mix(in srgb, var(--core-status-ready) 45%, var(--core-line));
+}
+
+html.core-product .ticket-card-status.not-ready,
+html.core-product .ticket-popup-operator-status-badge.not-ready,
+html.core-product .ticket-hub-detail-header .ticket-card-status.not-ready,
+html.core-product .ticket-hub-project-tickets-grid .ticket-card-status.not-ready {
+    color: var(--core-status-not-ready);
+    background: color-mix(in srgb, var(--core-status-not-ready) 14%, var(--core-status-chip-bg));
+    border-color: color-mix(in srgb, var(--core-status-not-ready) 45%, var(--core-line));
+}
+
+html.core-product .ticket-card-status.expiring-soon,
+html.core-product .ticket-popup-operator-status-badge.expiring-soon,
+html.core-product .ticket-hub-detail-header .ticket-card-status.expiring-soon,
+html.core-product .ticket-hub-project-tickets-grid .ticket-card-status.expiring-soon {
+    color: var(--core-status-expiring);
+    background: color-mix(in srgb, var(--core-status-expiring) 14%, var(--core-status-chip-bg));
+    border-color: color-mix(in srgb, var(--core-status-expiring) 45%, var(--core-line));
+}
+
+html.core-product .ticket-card-status.action-required,
+html.core-product .ticket-popup-operator-status-badge.action-required,
+html.core-product .ticket-hub-detail-header .ticket-card-status.action-required,
+html.core-product .ticket-hub-project-tickets-grid .ticket-card-status.action-required {
+    color: var(--core-ink);
+    background: color-mix(in srgb, var(--core-status-action) 88%, var(--core-status-chip-bg));
+    border-color: var(--core-status-action);
+}
+
+html.core-product .ticket-card-status.expired,
+html.core-product .ticket-card-status.cancelled,
+html.core-product .ticket-popup-operator-status-badge.expired,
+html.core-product .ticket-popup-operator-status-badge.cancelled,
+html.core-product .ticket-hub-detail-header .ticket-card-status.expired,
+html.core-product .ticket-hub-detail-header .ticket-card-status.cancelled,
+html.core-product .ticket-hub-project-tickets-grid .ticket-card-status.expired,
+html.core-product .ticket-hub-project-tickets-grid .ticket-card-status.cancelled,
+html.core-product .ticket-hub-table .ticket-card-status.cancelled {
+    color: var(--core-paper);
+    background: color-mix(in srgb, var(--core-status-neutral) 22%, var(--core-status-chip-bg));
+    border-color: color-mix(in srgb, var(--core-status-neutral) 45%, var(--core-line));
+}
+
+html.core-product .ticket-popup-status-indicator:hover,
+html.core-product .ticket-card-status.ticket-workflow-status-badge-btn:hover,
+html.core-product .ticket-popup-operator-status-badge.ticket-workflow-status-badge-btn:hover {
+    filter: none;
+    border-color: color-mix(in srgb, var(--core-gold) 55%, var(--core-line));
+}
+
+html.core-product .ticket-popup-status-indicator:focus-visible,
+html.core-product .ticket-workflow-status-badge-btn:focus-visible,
+html.core-product .ticket-hub-detail-header .ticket-card-status.ticket-workflow-status-badge-btn:focus-visible {
+    outline: 2px solid var(--core-gold);
+    outline-offset: 2px;
+}

@@ -1,0 +1,36 @@
+{
+  "name": "locus-api-worker",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "postinstall": "patch-package",
+    "dev": "wrangler d1 migrations apply locus-db --local && wrangler dev",
+    "deploy": "wrangler d1 migrations apply locus-db --remote && wrangler deploy && node scripts/post-deploy-credential-repack.mjs",
+    "d1:migrate:local": "wrangler d1 migrations apply locus-db --local",
+    "d1:migrate:remote": "wrangler d1 migrations apply locus-db --remote",
+    "d1:migrate:staging": "wrangler d1 migrations apply locus-db-staging --remote --env staging",
+    "d1:migrate:core": "wrangler d1 migrations apply locus-db-core --remote --env core",
+    "deploy:staging": "node scripts/deploy-staging.mjs",
+    "deploy:core": "node scripts/deploy-core.mjs",
+    "d1:seed:dev": "wrangler d1 execute locus-db --local --file=./seeds/dev_user.sql",
+    "d1:seed:renewal-mocks": "wrangler d1 execute locus-db --local --file=./seeds/dev_renewal_mock_tickets.sql",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@turf/turf": "^7.3.5",
+    "bcryptjs": "^2.4.3",
+    "fast-xml-parser": "^5.7.1",
+    "fflate": "^0.8.3",
+    "hono": "^4.12.25",
+    "jose": "^5.9.6",
+    "set-cookie-parser": "^3.1.0"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20250129.0",
+    "@types/bcryptjs": "^2.4.6",
+    "@types/node": "^25.6.0",
+    "patch-package": "^8.0.1",
+    "typescript": "^5.7.2",
+    "wrangler": "^3.99.0"
+  }
+}

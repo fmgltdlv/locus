@@ -1,0 +1,1028 @@
+/**
+ * App-wide UI themes.
+ * Tokens are consumed by styles.css via var(--app-*).
+ * Theme class on document.documentElement: app-theme-{name}
+ * (Auth shell uses css/auth-page.css — separate identity.)
+ */
+
+:root {
+    /* Default — matches pre-theme map app */
+    --app-bg-page: #1a1a1a;
+    --app-bg-surface: #2d2d2d;
+    --app-bg-surface-2: #262626;
+    --app-bg-muted: #333333;
+    --app-bg-hover: #3d3d3d;
+    --app-bg-input: #2d2d2d;
+    --app-bg-elevated: #2d2d2d;
+    --app-border: #404040;
+    --app-border-strong: #4a4a4a;
+    --app-border-muted: #525252;
+    --app-text-primary: #e5e5e5;
+    --app-text-secondary: #a3a3a3;
+    --app-text-muted: #969696;
+    --app-text-inverse: #ffffff;
+    --app-button-primary-text: #ffffff;
+    --app-accent: #2563eb;
+    --app-accent-hover: #1d4ed8;
+    --app-accent-muted: rgba(37, 99, 235, 0.35);
+    --app-focus-ring: rgba(37, 99, 235, 0.3);
+    --app-navbar-bg: #1a1a1a;
+    --app-navbar-shadow: rgba(0, 0, 0, 0.2);
+    --app-shadow: rgba(0, 0, 0, 0.2);
+    --app-shadow-lg: rgba(0, 0, 0, 0.35);
+    --app-overlay-scrim: rgba(0, 0, 0, 0.5);
+    --app-danger: #dc2626;
+    --app-danger-hover: #b91c1c;
+    --app-success: #22c55e;
+    --app-status-action-required: #facc15;
+    --app-status-action-required-text: #fde047;
+    --app-status-action-required-bg: rgba(250, 204, 21, 0.15);
+    --app-status-action-required-bubble-bg: #facc15;
+    --app-status-action-required-bubble-text: #171717;
+    --app-status-not-ready-text: #fca5a5;
+    --app-status-overridden-text: #86efac;
+    --app-map-placeholder: #2d2d2d;
+    --app-scrollbar-thumb: #555;
+    --app-scrollbar-track: #2d2d2d;
+    --app-checkbox-border: var(--app-border-strong);
+    --app-checkbox-bg: var(--app-bg-input);
+    --app-checkbox-checked-bg: var(--app-accent);
+    --app-checkbox-check-color: var(--app-button-primary-text, #ffffff);
+    --app-row-selected-bg: color-mix(in srgb, var(--app-accent) 22%, var(--app-bg-surface));
+    --app-sidebar-gradient: linear-gradient(180deg, #1a1a1a 0%, #141414 100%);
+    --app-modal-header-border: #404040;
+    --app-button-secondary-bg: #333333;
+    --app-button-secondary-hover: #404040;
+    --app-link: #60a5fa;
+    --app-bg-tool: #4b5563;
+    --app-bg-panel-input: #2a2a2a;
+    --app-border-soft: #444444;
+    --app-leaflet-control-bg: #ffffff;
+    --app-leaflet-control-text: #333333;
+    --app-leaflet-control-border: #ccc;
+    --app-leaflet-popup-bg: var(--app-bg-elevated);
+    --app-leaflet-popup-text: var(--app-text-primary);
+    --app-leaflet-popup-text-secondary: var(--app-text-secondary);
+    --app-leaflet-popup-border: var(--app-border);
+    --app-leaflet-popup-shadow: 0 10px 28px var(--app-shadow-lg);
+    --app-leaflet-popup-radius: 10px;
+    --app-leaflet-popup-tip: var(--app-leaflet-popup-bg);
+    --app-glass-blur: 0px;
+    --app-glass-saturate: 100%;
+}
+
+/* Explicit default class (same as :root) */
+html.app-theme-default {
+    --app-bg-page: #1a1a1a;
+    --app-bg-surface: #2d2d2d;
+    --app-bg-surface-2: #262626;
+    --app-bg-muted: #333333;
+    --app-bg-hover: #3d3d3d;
+    --app-bg-input: #2d2d2d;
+    --app-border: #404040;
+    --app-border-strong: #4a4a4a;
+    --app-text-primary: #e5e5e5;
+    --app-text-secondary: #a3a3a3;
+    --app-text-muted: #969696;
+    --app-button-primary-text: #ffffff;
+    --app-accent: #2563eb;
+    --app-accent-hover: #1d4ed8;
+    --app-accent-muted: rgba(37, 99, 235, 0.35);
+    --app-focus-ring: rgba(37, 99, 235, 0.3);
+    --app-navbar-bg: #1a1a1a;
+    --app-link: #60a5fa;
+}
+
+/* Frosted glass — cyan accent (aligned with login-theme-glass) */
+html.app-theme-glass {
+    --app-bg-panel-input: rgba(30, 38, 44, 0.85);
+    --app-bg-tool: rgba(71, 85, 105, 0.75);
+    --app-border-soft: rgba(255, 255, 255, 0.12);
+    --app-bg-page: #121820;
+    --app-bg-surface: rgba(38, 38, 38, 0.55);
+    --app-bg-surface-2: rgba(22, 28, 32, 0.65);
+    --app-bg-muted: rgba(30, 38, 44, 0.72);
+    --app-bg-hover: rgba(56, 189, 248, 0.12);
+    --app-bg-input: rgba(20, 28, 32, 0.75);
+    --app-border: rgba(255, 255, 255, 0.12);
+    --app-border-strong: rgba(56, 189, 248, 0.35);
+    --app-text-primary: #e5e5e5;
+    --app-text-secondary: #94a3b8;
+    --app-text-muted: #8a97a8;
+    --app-button-primary-text: #07131f;
+    --app-accent: #0ea5e9;
+    --app-accent-hover: #0284c7;
+    --app-accent-muted: rgba(56, 189, 248, 0.35);
+    --app-focus-ring: rgba(56, 189, 248, 0.35);
+    --app-navbar-bg: rgba(18, 24, 32, 0.85);
+    --app-navbar-shadow: rgba(0, 0, 0, 0.35);
+    --app-shadow: rgba(0, 0, 0, 0.35);
+    --app-sidebar-gradient: linear-gradient(165deg, rgba(22, 22, 22, 0.85) 0%, rgba(12, 18, 22, 0.92) 100%);
+    --app-link: #38bdf8;
+    --app-glass-blur: 12px;
+    --app-glass-saturate: 120%;
+}
+
+/* Outline minimal */
+html.app-theme-outline {
+    --app-bg-panel-input: #0f0f0f;
+    --app-bg-tool: #525252;
+    --app-border-soft: #525252;
+    --app-bg-page: #0a0a0a;
+    --app-bg-surface: #0f0f0f;
+    --app-bg-surface-2: #0f0f0f;
+    --app-bg-muted: #141414;
+    --app-bg-hover: #1a1a1a;
+    --app-bg-input: #0f0f0f;
+    --app-border: #525252;
+    --app-border-strong: #737373;
+    --app-text-primary: #e5e5e5;
+    --app-text-secondary: #a3a3a3;
+    --app-text-muted: #737373;
+    --app-button-primary-text: #0a0a0a;
+    --app-accent: #e5e5e5;
+    --app-accent-hover: #d4d4d4;
+    --app-accent-muted: rgba(255, 255, 255, 0.15);
+    --app-focus-ring: rgba(115, 115, 115, 0.45);
+    --app-navbar-bg: #0a0a0a;
+    --app-sidebar-gradient: linear-gradient(180deg, #0a0a0a 0%, #050505 100%);
+    --app-link: #a3a3a3;
+    --app-modal-header-border: #525252;
+    --app-button-secondary-bg: #0f0f0f;
+    --app-button-secondary-hover: #1a1a1a;
+}
+
+/* Ember — warm industrial */
+html.app-theme-ember {
+    --app-bg-panel-input: #1f1712;
+    --app-bg-tool: #78350f;
+    --app-border-soft: rgba(180, 83, 9, 0.35);
+    --app-bg-page: #120d0a;
+    --app-bg-surface: #1f1712;
+    --app-bg-surface-2: #292018;
+    --app-bg-muted: #1a1410;
+    --app-bg-hover: #3d2a1a;
+    --app-bg-input: #1a1410;
+    --app-border: rgba(180, 83, 9, 0.45);
+    --app-border-strong: rgba(217, 119, 6, 0.5);
+    --app-text-primary: #f5f0e8;
+    --app-text-secondary: #d6b896;
+    --app-text-muted: #a89078;
+    --app-button-primary-text: #1f1308;
+    --app-accent: #d97706;
+    --app-accent-hover: #b45309;
+    --app-accent-muted: rgba(217, 119, 6, 0.35);
+    --app-focus-ring: rgba(217, 119, 6, 0.35);
+    --app-navbar-bg: #1c1410;
+    --app-navbar-shadow: rgba(0, 0, 0, 0.45);
+    --app-sidebar-gradient: linear-gradient(180deg, #1c1410 0%, #120d0a 100%);
+    --app-link: #fbbf24;
+    --app-modal-header-border: rgba(180, 83, 9, 0.35);
+}
+
+/* Slate & cyan */
+html.app-theme-slate {
+    --app-bg-panel-input: #1e293b;
+    --app-bg-tool: #475569;
+    --app-border-soft: #475569;
+    --app-bg-page: #020617;
+    --app-bg-surface: #1e293b;
+    --app-bg-surface-2: #0f172a;
+    --app-bg-muted: #334155;
+    --app-bg-hover: #334155;
+    --app-bg-input: #0f172a;
+    --app-border: #334155;
+    --app-border-strong: #475569;
+    --app-text-primary: #f1f5f9;
+    --app-text-secondary: #94a3b8;
+    --app-text-muted: #8294a8;
+    --app-button-primary-text: #021018;
+    --app-accent: #0891b2;
+    --app-accent-hover: #0e7490;
+    --app-accent-muted: rgba(34, 211, 238, 0.3);
+    --app-focus-ring: rgba(34, 211, 238, 0.35);
+    --app-navbar-bg: #0f172a;
+    --app-sidebar-gradient: linear-gradient(200deg, #0f172a 0%, #020617 100%);
+    --app-link: #22d3ee;
+    --app-modal-header-border: #334155;
+}
+
+/* Surveyor blueprint — dark plotted-map panels with cyan/orange markers */
+html.app-theme-blueprint {
+    --app-bg-panel-input: #0b2536;
+    --app-bg-tool: #1e5f76;
+    --app-border-soft: rgba(125, 211, 252, 0.28);
+    --app-bg-page: #061927;
+    --app-bg-surface: #0b2536;
+    --app-bg-surface-2: #082033;
+    --app-bg-muted: #11364d;
+    --app-bg-hover: #123f58;
+    --app-bg-input: #071d2d;
+    --app-bg-elevated: #0b2536;
+    --app-border: rgba(125, 211, 252, 0.35);
+    --app-border-strong: #7dd3fc;
+    --app-border-muted: rgba(251, 146, 60, 0.42);
+    --app-text-primary: #e0f7ff;
+    --app-text-secondary: #a5d8ec;
+    --app-text-muted: #6fa9be;
+    --app-text-inverse: #f8fdff;
+    --app-button-primary-text: #1b1208;
+    --app-accent: #fb923c;
+    --app-accent-hover: #fdba74;
+    --app-accent-muted: rgba(251, 146, 60, 0.32);
+    --app-focus-ring: rgba(125, 211, 252, 0.34);
+    --app-navbar-bg: #061927;
+    --app-navbar-shadow: rgba(0, 0, 0, 0.42);
+    --app-shadow: rgba(0, 0, 0, 0.28);
+    --app-shadow-lg: rgba(0, 0, 0, 0.5);
+    --app-sidebar-gradient: linear-gradient(180deg, #082033 0%, #061927 100%);
+    --app-link: #7dd3fc;
+    --app-modal-header-border: rgba(125, 211, 252, 0.28);
+}
+
+/* Contractor block — high-contrast industrial UI with hard edges */
+html.app-theme-contractor {
+    --app-bg-panel-input: #121212;
+    --app-bg-tool: #3b3b3b;
+    --app-border-soft: #4b4b4b;
+    --app-bg-page: #080808;
+    --app-bg-surface: #141414;
+    --app-bg-surface-2: #1f1f1f;
+    --app-bg-muted: #252525;
+    --app-bg-hover: #303030;
+    --app-bg-input: #101010;
+    --app-bg-elevated: #141414;
+    --app-border: #5d5d5d;
+    --app-border-strong: #facc15;
+    --app-border-muted: #3d3d3d;
+    --app-text-primary: #f5f5f0;
+    --app-text-secondary: #c7c7bd;
+    --app-text-muted: #8f8f83;
+    --app-text-inverse: #f5f5f0;
+    --app-button-primary-text: #0a0a0a;
+    --app-accent: #facc15;
+    --app-accent-hover: #eab308;
+    --app-accent-muted: rgba(250, 204, 21, 0.28);
+    --app-focus-ring: rgba(250, 204, 21, 0.35);
+    --app-navbar-bg: #0a0a0a;
+    --app-navbar-shadow: rgba(0, 0, 0, 0.5);
+    --app-shadow: rgba(0, 0, 0, 0.32);
+    --app-shadow-lg: rgba(0, 0, 0, 0.6);
+    --app-sidebar-gradient: linear-gradient(180deg, #111 0%, #050505 100%);
+    --app-link: #fde047;
+    --app-modal-header-border: #3d3d3d;
+}
+
+/* Map console — dark operations room with muted status-light accents */
+html.app-theme-console {
+    --app-bg-panel-input: #0f1b17;
+    --app-bg-tool: #24352f;
+    --app-border-soft: rgba(74, 222, 128, 0.22);
+    --app-bg-page: #07110f;
+    --app-bg-surface: #0d1a17;
+    --app-bg-surface-2: #101f1b;
+    --app-bg-muted: #183128;
+    --app-bg-hover: #1d3d32;
+    --app-bg-input: #091511;
+    --app-bg-elevated: #0d1a17;
+    --app-border: rgba(74, 222, 128, 0.26);
+    --app-border-strong: #4ade80;
+    --app-border-muted: rgba(245, 158, 11, 0.28);
+    --app-text-primary: #e2f7e8;
+    --app-text-secondary: #a7c8b1;
+    --app-text-muted: #6f947b;
+    --app-text-inverse: #f5fff7;
+    --app-button-primary-text: #160f03;
+    --app-accent: #f59e0b;
+    --app-accent-hover: #fbbf24;
+    --app-accent-muted: rgba(245, 158, 11, 0.3);
+    --app-focus-ring: rgba(74, 222, 128, 0.32);
+    --app-navbar-bg: #07110f;
+    --app-navbar-shadow: rgba(0, 0, 0, 0.42);
+    --app-shadow: rgba(0, 0, 0, 0.34);
+    --app-shadow-lg: rgba(0, 0, 0, 0.58);
+    --app-sidebar-gradient: linear-gradient(180deg, #0d1a17 0%, #07110f 100%);
+    --app-link: #86efac;
+    --app-modal-header-border: rgba(74, 222, 128, 0.22);
+}
+
+/* Land office — survey-map warmth with restrained ornamental edges */
+html.app-theme-landoffice {
+    --app-checkbox-border: #b97a45;
+    --app-checkbox-bg: #fffaf0;
+    --app-bg-panel-input: #fff7e9;
+    --app-bg-tool: #8b4f2d;
+    --app-border-soft: #d6a76f;
+    --app-bg-page: #ead7bd;
+    --app-bg-surface: #fff7e9;
+    --app-bg-surface-2: #f5e1c4;
+    --app-bg-muted: #dec49e;
+    --app-bg-hover: #ead0aa;
+    --app-bg-input: #fffaf0;
+    --app-bg-elevated: #fff7e9;
+    --app-border: #b97a45;
+    --app-border-strong: #6f3d24;
+    --app-border-muted: #d6a76f;
+    --app-text-primary: #332014;
+    --app-text-secondary: #6f4b31;
+    --app-text-muted: #7d5638;
+    --app-text-inverse: #2a170d;
+    --app-button-primary-text: #2a170d;
+    --app-accent: #e9b45b;
+    --app-accent-hover: #d99434;
+    --app-accent-muted: rgba(139, 79, 45, 0.2);
+    --app-focus-ring: rgba(139, 79, 45, 0.28);
+    --app-navbar-bg: #f5e1c4;
+    --app-navbar-shadow: rgba(82, 45, 25, 0.2);
+    --app-shadow: rgba(82, 45, 25, 0.16);
+    --app-shadow-lg: rgba(82, 45, 25, 0.3);
+    --app-sidebar-gradient: linear-gradient(180deg, #fff0d2 0%, #ead7bd 100%);
+    --app-link: #8b4f2d;
+    --app-modal-header-border: #d6a76f;
+    --app-leaflet-control-bg: #fff7e9;
+    --app-leaflet-control-text: #332014;
+    --app-leaflet-control-border: #b97a45;
+    --app-status-action-required: #b45309;
+    --app-status-action-required-text: #6f3d24;
+    --app-status-action-required-bg: rgba(180, 83, 9, 0.12);
+    --app-status-action-required-bubble-bg: #f59e0b;
+    --app-status-action-required-bubble-text: #1a0f08;
+    --app-status-not-ready-text: #b91c1c;
+    --app-status-overridden-text: #15803d;
+}
+
+/* Modern utility — cleaner without the generic blue SaaS polish */
+html.app-theme-modern {
+    --app-bg-panel-input: #17211f;
+    --app-bg-tool: #40534c;
+    --app-border-soft: #3e514b;
+    --app-bg-page: #101816;
+    --app-bg-surface: #1b2724;
+    --app-bg-surface-2: #14201d;
+    --app-bg-muted: #263832;
+    --app-bg-hover: #30463f;
+    --app-bg-input: #111b18;
+    --app-bg-elevated: #1b2724;
+    --app-border: #3e514b;
+    --app-border-strong: #8fb59e;
+    --app-border-muted: #30463f;
+    --app-text-primary: #edf5ef;
+    --app-text-secondary: #b1c2b7;
+    --app-text-muted: #7f9589;
+    --app-text-inverse: #f8fbf7;
+    --app-button-primary-text: #1f130b;
+    --app-accent: #c98147;
+    --app-accent-hover: #e0a15d;
+    --app-accent-muted: rgba(201, 129, 71, 0.28);
+    --app-focus-ring: rgba(143, 181, 158, 0.3);
+    --app-navbar-bg: #101816;
+    --app-navbar-shadow: rgba(0, 0, 0, 0.34);
+    --app-shadow: rgba(0, 0, 0, 0.28);
+    --app-shadow-lg: rgba(0, 0, 0, 0.48);
+    --app-sidebar-gradient: linear-gradient(180deg, #1b2724 0%, #101816 100%);
+    --app-link: #a7cdb6;
+    --app-modal-header-border: #30463f;
+}
+
+/* Surfaces that support backdrop blur for glass theme */
+html.app-theme-glass .navbar,
+html.app-theme-glass #sidebar,
+html.app-theme-glass .modal-content,
+html.app-theme-glass .account-menu-dropdown,
+html.app-theme-glass .drone-maps-timeline-bar__inner,
+html.app-theme-glass .public-search-bar__inner,
+html.app-theme-glass .map-status-filters-bar,
+html.app-theme-glass .map-status-dropdown {
+    backdrop-filter: blur(var(--app-glass-blur)) saturate(var(--app-glass-saturate));
+    -webkit-backdrop-filter: blur(var(--app-glass-blur)) saturate(var(--app-glass-saturate));
+    background: var(--app-bg-surface);
+}
+
+/* Outline: primary actions look like outlined buttons */
+html.app-theme-outline .request-services-button:not(:hover),
+html.app-theme-outline .profile-button-primary:not(:hover),
+html.app-theme-outline .app-dialog-btn-primary:not(:hover),
+html.app-theme-outline .button-primary:not(:hover),
+html.app-theme-outline .ticket-popup-mock-btn:not(.ticket-popup-mock-btn--secondary):not(:hover),
+html.app-theme-outline .ticket-hub-action-primary:not(:hover),
+html.app-theme-outline .ticket-hub-mock-btn-primary:not(:hover) {
+    background: transparent !important;
+    color: var(--app-text-primary) !important;
+    border: 2px solid var(--app-text-primary) !important;
+}
+
+html.app-theme-outline .request-services-button:hover,
+html.app-theme-outline .profile-button-primary:hover,
+html.app-theme-outline .app-dialog-btn-primary:hover,
+html.app-theme-outline .button-primary:hover,
+html.app-theme-outline .ticket-popup-mock-btn:not(.ticket-popup-mock-btn--secondary):hover,
+html.app-theme-outline .ticket-hub-action-primary:hover,
+html.app-theme-outline .ticket-hub-mock-btn-primary:hover {
+    background: var(--app-text-primary) !important;
+    color: var(--app-bg-page) !important;
+}
+
+/* Outline: grey secondary buttons need dark text for contrast. */
+html.app-theme-outline .profile-button-secondary,
+html.app-theme-outline .app-dialog-btn-secondary,
+html.app-theme-outline .button-secondary,
+html.app-theme-outline .ticket-site-doc-button,
+html.app-theme-outline .ticket-sidebar-close-button,
+html.app-theme-outline .ticket-hub-create-btn,
+html.app-theme-outline .ticket-hub-action-btn,
+html.app-theme-outline .ticket-hub-action-secondary,
+html.app-theme-outline .ticket-popup-mock-btn--secondary,
+html.app-theme-outline .ticket-hub-mock-btn:not(.ticket-hub-mock-btn-primary),
+html.app-theme-outline .data-window-button,
+html.app-theme-outline .data-search-mobile-open,
+html.app-theme-outline .data-search-modal-btn-secondary,
+html.app-theme-outline .mobile-icon-button,
+html.app-theme-outline .map-tools-mobile-fab,
+html.app-theme-outline .map-tools-mobile-camera-btn,
+html.app-theme-outline .map-tools-mobile-bubble-icon,
+html.app-theme-outline .map-tools-mobile-top-right-btn,
+html.app-theme-outline .map-toolbar-btn,
+html.app-theme-outline .mobile-location-button,
+html.app-theme-outline .map-status-action-btn:not(.map-status-action-btn--active),
+html.app-theme-outline .map-status-stats-expand {
+    background: var(--app-text-primary) !important;
+    color: var(--app-bg-page) !important;
+    border-color: var(--app-text-primary) !important;
+}
+
+html.app-theme-outline .profile-button-secondary:hover,
+html.app-theme-outline .app-dialog-btn-secondary:hover,
+html.app-theme-outline .button-secondary:hover,
+html.app-theme-outline .ticket-site-doc-button:hover,
+html.app-theme-outline .ticket-sidebar-close-button:hover,
+html.app-theme-outline .ticket-hub-create-btn:hover,
+html.app-theme-outline .ticket-hub-action-btn:hover,
+html.app-theme-outline .ticket-hub-action-secondary:hover,
+html.app-theme-outline .ticket-popup-mock-btn--secondary:hover,
+html.app-theme-outline .ticket-hub-mock-btn:not(.ticket-hub-mock-btn-primary):hover,
+html.app-theme-outline .data-window-button:hover,
+html.app-theme-outline .data-search-mobile-open:hover,
+html.app-theme-outline .data-search-modal-btn-secondary:hover,
+html.app-theme-outline .mobile-icon-button:hover,
+html.app-theme-outline .map-tools-mobile-fab:hover,
+html.app-theme-outline .map-tools-mobile-camera-btn:hover,
+html.app-theme-outline .map-tools-mobile-bubble:hover .map-tools-mobile-bubble-icon,
+html.app-theme-outline .map-tools-mobile-top-right-btn:hover,
+html.app-theme-outline .map-toolbar-btn:hover,
+html.app-theme-outline .mobile-location-button:hover,
+html.app-theme-outline .map-status-action-btn:not(.map-status-action-btn--active):hover,
+html.app-theme-outline .map-status-stats-expand:hover {
+    background: var(--app-accent-hover) !important;
+    color: var(--app-bg-page) !important;
+    border-color: var(--app-accent-hover) !important;
+}
+
+/* Leaflet controls — follow app text/background tokens */
+html.app-theme-glass .leaflet-bar a,
+html.app-theme-outline .leaflet-bar a,
+html.app-theme-ember .leaflet-bar a,
+html.app-theme-slate .leaflet-bar a,
+html.app-theme-blueprint .leaflet-bar a,
+html.app-theme-contractor .leaflet-bar a,
+html.app-theme-console .leaflet-bar a,
+html.app-theme-landoffice .leaflet-bar a,
+html.app-theme-modern .leaflet-bar a {
+    background-color: var(--app-bg-surface);
+    color: var(--app-text-primary);
+    border-color: var(--app-border);
+}
+
+html.app-theme-glass .leaflet-bar a:hover,
+html.app-theme-outline .leaflet-bar a:hover,
+html.app-theme-ember .leaflet-bar a:hover,
+html.app-theme-slate .leaflet-bar a:hover,
+html.app-theme-blueprint .leaflet-bar a:hover,
+html.app-theme-contractor .leaflet-bar a:hover,
+html.app-theme-console .leaflet-bar a:hover,
+html.app-theme-landoffice .leaflet-bar a:hover,
+html.app-theme-modern .leaflet-bar a:hover {
+    background-color: var(--app-bg-hover);
+}
+
+/* Theme personalities: corners, lines, and texture on top of shared tokens. */
+html.app-theme-blueprint body,
+html.app-theme-console body {
+    background-color: var(--app-bg-page);
+    background-image:
+        linear-gradient(rgba(125, 211, 252, 0.05) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(125, 211, 252, 0.05) 1px, transparent 1px);
+    background-size: 28px 28px;
+}
+
+html.app-theme-blueprint .navbar,
+html.app-theme-blueprint .sidebar-content,
+html.app-theme-blueprint .section,
+html.app-theme-blueprint .modal-content,
+html.app-theme-blueprint .ticket-popup,
+html.app-theme-console .navbar,
+html.app-theme-console .sidebar-content,
+html.app-theme-console .section,
+html.app-theme-console .modal-content,
+html.app-theme-console .ticket-popup {
+    background-image:
+        linear-gradient(rgba(125, 211, 252, 0.035) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(125, 211, 252, 0.035) 1px, transparent 1px);
+    background-size: 18px 18px;
+}
+
+html.app-theme-blueprint .modal-title,
+html.app-theme-blueprint .section-title,
+html.app-theme-blueprint .ticket-popup-title,
+html.app-theme-console .modal-title,
+html.app-theme-console .section-title,
+html.app-theme-console .ticket-popup-title,
+html.app-theme-contractor .modal-title,
+html.app-theme-contractor .section-title,
+html.app-theme-contractor .ticket-popup-title {
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+html.app-theme-blueprint .org-selector,
+html.app-theme-blueprint .request-services-button,
+html.app-theme-blueprint .address-input,
+html.app-theme-blueprint .location-button,
+html.app-theme-blueprint .location-loading-indicator,
+html.app-theme-blueprint .modal-content,
+html.app-theme-blueprint .ticket-popup,
+html.app-theme-blueprint .section,
+html.app-theme-blueprint .form-input,
+html.app-theme-blueprint .form-select,
+html.app-theme-blueprint .profile-button,
+html.app-theme-blueprint .button,
+html.app-theme-blueprint .ticket-upload-button,
+html.app-theme-blueprint .ticket-popup-mock-btn,
+html.app-theme-blueprint .ticket-hub-action-btn,
+html.app-theme-blueprint .ticket-hub-mock-btn,
+html.app-theme-blueprint .mobile-icon-button,
+html.app-theme-contractor .org-selector,
+html.app-theme-contractor .request-services-button,
+html.app-theme-contractor .address-input,
+html.app-theme-contractor .location-button,
+html.app-theme-contractor .location-loading-indicator,
+html.app-theme-contractor .modal-content,
+html.app-theme-contractor .ticket-popup,
+html.app-theme-contractor .section,
+html.app-theme-contractor .form-input,
+html.app-theme-contractor .form-select,
+html.app-theme-contractor .profile-button,
+html.app-theme-contractor .button,
+html.app-theme-contractor .ticket-upload-button,
+html.app-theme-contractor .ticket-popup-mock-btn,
+html.app-theme-contractor .ticket-hub-action-btn,
+html.app-theme-contractor .ticket-hub-mock-btn,
+html.app-theme-contractor .mobile-icon-button,
+html.app-theme-console .org-selector,
+html.app-theme-console .request-services-button,
+html.app-theme-console .address-input,
+html.app-theme-console .location-button,
+html.app-theme-console .location-loading-indicator,
+html.app-theme-console .modal-content,
+html.app-theme-console .ticket-popup,
+html.app-theme-console .section,
+html.app-theme-console .form-input,
+html.app-theme-console .form-select,
+html.app-theme-console .profile-button,
+html.app-theme-console .button,
+html.app-theme-console .ticket-upload-button,
+html.app-theme-console .ticket-popup-mock-btn,
+html.app-theme-console .ticket-hub-action-btn,
+html.app-theme-console .ticket-hub-mock-btn,
+html.app-theme-console .mobile-icon-button {
+    border-radius: 2px;
+}
+
+html.app-theme-contractor .navbar,
+html.app-theme-contractor .section,
+html.app-theme-contractor .modal-content,
+html.app-theme-contractor .ticket-popup {
+    border-color: var(--app-border);
+    box-shadow: 5px 5px 0 rgba(250, 204, 21, 0.18);
+}
+
+html.app-theme-contractor .request-services-button,
+html.app-theme-contractor .profile-button-primary,
+html.app-theme-contractor .button,
+html.app-theme-contractor .ticket-upload-button,
+html.app-theme-contractor .ticket-popup-mock-btn,
+html.app-theme-contractor .ticket-hub-action-btn,
+html.app-theme-contractor .ticket-hub-mock-btn {
+    color: #0a0a0a;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+html.app-theme-landoffice body {
+    background-color: var(--app-bg-page);
+    background-image:
+        linear-gradient(rgba(111, 61, 36, 0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(111, 61, 36, 0.04) 1px, transparent 1px);
+    background-size: 32px 32px;
+}
+
+html.app-theme-landoffice .modal-content,
+html.app-theme-landoffice .section,
+html.app-theme-landoffice .ticket-popup,
+html.app-theme-landoffice .account-menu-dropdown {
+    border: 3px double var(--app-border);
+    box-shadow: 0 0 0 3px rgba(139, 79, 45, 0.1), 0 12px 28px var(--app-shadow-lg);
+}
+
+html.app-theme-landoffice .request-services-button,
+html.app-theme-landoffice .profile-button,
+html.app-theme-landoffice .button,
+html.app-theme-landoffice .ticket-upload-button,
+html.app-theme-landoffice .ticket-popup-mock-btn,
+html.app-theme-landoffice .ticket-hub-action-btn,
+html.app-theme-landoffice .ticket-hub-mock-btn {
+    border-radius: 999px;
+    border: 1px solid var(--app-border-strong);
+    font-family: Georgia, "Times New Roman", serif;
+    letter-spacing: 0.02em;
+}
+
+html.app-theme-landoffice .modal-title,
+html.app-theme-landoffice .section-title,
+html.app-theme-landoffice .ticket-popup-title,
+html.app-theme-landoffice .navbar-title {
+    font-family: Georgia, "Times New Roman", serif;
+}
+
+html.app-theme-modern .navbar,
+html.app-theme-modern .sidebar-content,
+html.app-theme-modern .section,
+html.app-theme-modern .modal-content,
+html.app-theme-modern .ticket-popup {
+    box-shadow: 0 16px 40px -24px var(--app-shadow-lg);
+}
+
+html.app-theme-modern .org-selector,
+html.app-theme-modern .request-services-button,
+html.app-theme-modern .address-input,
+html.app-theme-modern .location-button,
+html.app-theme-modern .location-loading-indicator,
+html.app-theme-modern .modal-content,
+html.app-theme-modern .ticket-popup,
+html.app-theme-modern .section,
+html.app-theme-modern .form-input,
+html.app-theme-modern .form-select,
+html.app-theme-modern .profile-button,
+html.app-theme-modern .button,
+html.app-theme-modern .ticket-upload-button,
+html.app-theme-modern .ticket-popup-mock-btn,
+html.app-theme-modern .ticket-hub-action-btn,
+html.app-theme-modern .ticket-hub-mock-btn,
+html.app-theme-modern .mobile-icon-button {
+    border-radius: 0.875rem;
+}
+
+/* Profile → Text size: scales rem-based UI on the map page (html root font-size). */
+html[data-font-scale="compact"] {
+    font-size: 87.5%;
+}
+
+html[data-font-scale="large"] {
+    font-size: 112.5%;
+}
+
+html[data-font-scale="max"] {
+    font-size: 125%;
+}
+
+.leaflet-container {
+    background: var(--app-map-placeholder);
+}
+
+.app-profile-hint {
+    font-size: 0.75rem;
+    color: var(--app-text-secondary);
+    margin-top: 0.25rem;
+}
+
+#userGuideModal .user-guide-content .app-profile-hint,
+#userGuideModal .user-guide-content .user-guide-status-list {
+    font-size: 0.875rem;
+    line-height: 1.55;
+}
+
+#userGuideModal .user-guide-content .app-profile-hint a {
+    color: var(--app-link);
+    text-decoration: underline;
+    text-underline-offset: 0.12em;
+}
+
+#userGuideModal .user-guide-content .profile-section-title {
+    font-size: 1.0625rem;
+}
+
+#userGuideModal .user-guide-status-list {
+    padding-left: 1.25rem;
+    margin-top: 0.5rem;
+}
+
+#userGuideModal .user-guide-status-list li + li {
+    margin-top: 0.4rem;
+}
+
+#userGuideModal .user-guide-last-updated {
+    font-size: 0.8125rem;
+    line-height: 1.4;
+    color: var(--app-text-secondary);
+    margin-top: 1.25rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid var(--app-bg-muted);
+}
+
+#userGuideModal .user-guide-toc-intro {
+    margin: 0 0 0.85rem;
+}
+
+#userGuideModal .user-guide-search {
+    margin: 0 0 0.85rem;
+}
+
+#userGuideModal .user-guide-search-label {
+    display: block;
+    margin: 0 0 0.35rem;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: var(--app-text-primary);
+}
+
+#userGuideModal .user-guide-search-input {
+    width: 100%;
+    box-sizing: border-box;
+}
+
+#userGuideModal .user-guide-search-empty {
+    margin: 0.55rem 0 0;
+}
+
+#userGuideModal .user-guide-toc-nav {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+#userGuideModal .user-guide-toc-item {
+    display: flex;
+    flex-direction: row;
+    align-items: flex-start;
+    gap: 0.75rem;
+    width: 100%;
+    margin: 0;
+    padding: 0.75rem 0.9rem;
+    border: 1px solid var(--app-bg-muted);
+    border-radius: 0.5rem;
+    background: var(--app-bg-elevated, var(--app-bg));
+    color: inherit;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+    transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+
+#userGuideModal .user-guide-toc-item[hidden] {
+    display: none !important;
+}
+
+#userGuideModal .user-guide-toc-item-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 2.25rem;
+    height: 2.25rem;
+    margin-top: 0.05rem;
+    border-radius: 0.45rem;
+    background: var(--app-bg-muted);
+    color: var(--app-accent);
+}
+
+#userGuideModal .user-guide-toc-item-icon svg {
+    display: block;
+    width: 1.15rem;
+    height: 1.15rem;
+}
+
+#userGuideModal .user-guide-toc-item-text {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.2rem;
+    min-width: 0;
+}
+
+#userGuideModal .user-guide-toc-item:hover {
+    border-color: var(--app-accent);
+    background: var(--app-bg-muted);
+}
+
+#userGuideModal .user-guide-toc-item:focus-visible {
+    outline: 2px solid var(--app-accent);
+    outline-offset: 2px;
+}
+
+#userGuideModal .user-guide-toc-item-title {
+    font-size: 0.9375rem;
+    font-weight: 600;
+    color: var(--app-text-primary);
+    line-height: 1.3;
+}
+
+#userGuideModal .user-guide-toc-item-blurb {
+    font-size: 0.8125rem;
+    line-height: 1.4;
+    color: var(--app-text-secondary);
+}
+
+#userGuideModal .user-guide-back {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    margin: 0 0 0.85rem;
+    padding: 0.35rem 0.55rem;
+    border: none;
+    border-radius: 0.375rem;
+    background: transparent;
+    color: var(--app-link, var(--app-accent));
+    font: inherit;
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+}
+
+#userGuideModal .user-guide-back:hover {
+    text-decoration: underline;
+    text-underline-offset: 0.12em;
+}
+
+#userGuideModal .user-guide-back:focus-visible {
+    outline: 2px solid var(--app-accent);
+    outline-offset: 2px;
+}
+
+#userGuideModal .user-guide-article .profile-section-title {
+    margin-bottom: 0.5rem;
+}
+
+#userGuideModal .user-guide-article .app-profile-hint + .app-profile-hint,
+#userGuideModal .user-guide-article .user-guide-status-list + .app-profile-hint {
+    margin-top: 0.75rem;
+}
+
+#userGuideModal .user-guide-status-chip-list {
+    list-style: none;
+    margin: 0.75rem 0 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.65rem;
+}
+
+#userGuideModal .user-guide-status-chip-row {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.35rem;
+    padding: 0.65rem 0.75rem;
+    border: 1px solid var(--app-bg-muted);
+    border-radius: 0.5rem;
+    background: var(--app-bg-elevated, var(--app-bg));
+}
+
+#userGuideModal .user-guide-status-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    max-width: 100%;
+}
+
+#userGuideModal .user-guide-status-chip-pin {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.5rem;
+    height: 1.5rem;
+    border-radius: 0.35rem;
+    background: var(--app-bg-surface, #fff);
+    border: 1px solid rgba(0, 0, 0, 0.18);
+    box-sizing: border-box;
+    flex-shrink: 0;
+    color: var(--user-guide-pin-color, var(--app-text-secondary));
+}
+
+#userGuideModal .user-guide-status-chip-pin svg {
+    display: block;
+    width: 0.9rem;
+    height: 0.9rem;
+}
+
+#userGuideModal .user-guide-status-chip-label {
+    font-size: 0.875rem;
+    font-weight: 650;
+    line-height: 1.25;
+    color: var(--app-text-primary);
+}
+
+#userGuideModal .user-guide-status-chip-text {
+    font-size: 0.8125rem;
+    line-height: 1.5;
+    color: var(--app-text-secondary);
+}
+
+#userGuideModal .user-guide-callout {
+    margin-top: 0.9rem;
+    padding: 0.75rem 0.85rem;
+    border-radius: 0.5rem;
+    border: 1px solid var(--app-bg-muted);
+    border-left: 3px solid var(--app-accent);
+    background: var(--app-bg-muted);
+}
+
+#userGuideModal .user-guide-callout--warning {
+    border-left-color: #f59e0b;
+}
+
+#userGuideModal .user-guide-callout-title {
+    display: block;
+    font-size: 0.8125rem;
+    font-weight: 700;
+    color: var(--app-text-primary);
+    margin: 0 0 0.25rem;
+}
+
+#userGuideModal .user-guide-callout-body {
+    margin: 0;
+    font-size: 0.8125rem;
+    line-height: 1.5;
+    color: var(--app-text-secondary);
+}
+
+#userGuideModal .user-guide-callout + .user-guide-status-list,
+#userGuideModal .user-guide-status-list + .user-guide-callout,
+#userGuideModal .app-profile-hint + .user-guide-callout,
+#userGuideModal .user-guide-status-chip-list + .app-profile-hint {
+    margin-top: 0.85rem;
+}
+
+/* Standard, Frosted Glass, Slate & Cyan: operator response station name + response code read as white (not accent link color). */
+html.app-theme-default .ticket-hub-resp-cell-link,
+html.app-theme-glass .ticket-hub-resp-cell-link,
+html.app-theme-slate .ticket-hub-resp-cell-link {
+    color: #ffffff;
+}
+
+html.app-theme-default .ticket-hub-resp-cell-link:hover,
+html.app-theme-glass .ticket-hub-resp-cell-link:hover,
+html.app-theme-slate .ticket-hub-resp-cell-link:hover {
+    color: #ffffff;
+}
+
+html.app-theme-default .ticket-response-card-meta .ticket-response-card-code-inline,
+html.app-theme-glass .ticket-response-card-meta .ticket-response-card-code-inline,
+html.app-theme-slate .ticket-response-card-meta .ticket-response-card-code-inline {
+    color: #ffffff;
+}
+
+/* Land office: light paper surfaces need ink-brown links, not gold accent. */
+html.app-theme-landoffice .ticket-hub-resp-cell-link,
+html.app-theme-landoffice .ticket-hub-resp-cell-link:hover,
+html.app-theme-landoffice .ticket-response-card-meta .ticket-response-card-code-inline {
+    color: var(--app-link);
+}
+
+html.app-theme-landoffice .ticket-response-action-required .ticket-hub-resp-cell-link,
+html.app-theme-landoffice .ticket-response-action-required .ticket-hub-resp-cell-link:hover {
+    color: var(--app-border-strong);
+    font-weight: 600;
+}
+
+/* Land office: response code + operator response detail popups sit on light paper — all ink black. */
+html.app-theme-landoffice .ticket-hub-op-detail-panel {
+    color: #000000;
+}
+
+html.app-theme-landoffice .ticket-hub-op-detail-title,
+html.app-theme-landoffice .ticket-hub-op-detail-close,
+html.app-theme-landoffice .ticket-hub-op-detail-close:hover,
+html.app-theme-landoffice .ticket-hub-op-detail-outstanding,
+html.app-theme-landoffice .ticket-hub-op-detail-subtitle,
+html.app-theme-landoffice .ticket-hub-op-detail-panel .ticket-history-detail-dl,
+html.app-theme-landoffice .ticket-hub-op-detail-panel .ticket-history-detail-dl dt,
+html.app-theme-landoffice .ticket-hub-op-detail-panel .ticket-history-detail-dl dd,
+html.app-theme-landoffice .ticket-hub-op-detail-panel .ticket-hub-override-note,
+html.app-theme-landoffice .ticket-hub-op-detail-panel .ticket-hub-async-block,
+html.app-theme-landoffice .ticket-hub-op-detail-panel .ticket-hub-response-action,
+html.app-theme-landoffice .ticket-hub-op-detail-panel .ticket-hub-response-action-usan,
+html.app-theme-landoffice .ticket-hub-op-detail-panel .ticket-hub-response-action-override,
+html.app-theme-landoffice .ticket-hub-op-detail-panel .ticket-hub-response-action-remove,
+html.app-theme-landoffice .ticket-hub-op-detail-panel p {
+    color: #000000;
+}

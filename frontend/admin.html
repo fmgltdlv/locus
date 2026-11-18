@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="en" data-pinch-zoom-policy="user-pref">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <meta name="theme-color" content="#073047" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <link rel="apple-touch-icon" href="/assets/pwa/icon-192.png" />
+    <link rel="icon" href="assets/logo-mark.svg" type="image/svg+xml" />
+    <!-- API URL: js/config-override.js -->
+    <title>Admin — Locus</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;800&family=IBM+Plex+Sans:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <script>
+        (function () {
+            var fallbackTheme = 'dark';
+            function isTheme(value) {
+                return value === 'light' || value === 'dark';
+            }
+            try {
+                var hasUserTheme = false;
+                var userRaw = localStorage.getItem('currentUser');
+                if (userRaw) {
+                    var user = JSON.parse(userRaw);
+                    if (user && user.id) {
+                        var profileRaw = localStorage.getItem('userProfile_user_' + user.id);
+                        if (profileRaw) {
+                            var profile = JSON.parse(profileRaw);
+                            if (profile && isTheme(profile.adminTheme)) {
+                                fallbackTheme = profile.adminTheme;
+                                hasUserTheme = true;
+                            }
+                        }
+                    }
+                }
+                var stored = localStorage.getItem('adminPanelTheme');
+                if (!hasUserTheme && isTheme(stored)) fallbackTheme = stored;
+            } catch (e) {}
+            document.documentElement.setAttribute('data-admin-theme', fallbackTheme);
+        })();
+    </script>
+    <script src="js/config-override.js"></script>
+    <script src="js/pwa-register.js"></script>
+    <script src="js/mobilePinchZoomGuard.js"></script>
+    <link rel="stylesheet" href="admin.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+</head>
+<body>
+    <div class="admin-container">
+        <div class="admin-toolbar">
+            <div class="admin-tabs admin-tabs-desktop" role="tablist" aria-label="Admin sections">
+                <button type="button" class="admin-tab" data-tab="users" onclick="switchTab('users', this)">Users</button>
+                <button type="button" class="admin-tab admin-tab-dev-only" data-tab="serviceRequests" onclick="switchTab('serviceRequests', this)"><span class="admin-tab-inner"><span class="admin-tab-text">Service Requests</span><span class="admin-tab-badge" hidden aria-hidden="true"></span></span></button>
+                <button type="button" class="admin-tab" id="adminTabPublicSharing" data-tab="publicSharing" onclick="switchTab('publicSharing', this)">Public sharing</button>
+                <button type="button" class="admin-tab" data-tab="workflow" onclick="switchTab('workflow', this)">Workflow</button>
+                <button type="button" class="admin-tab admin-tab-dev-only" data-tab="errors" onclick="switchTab('errors', this)"><span class="admin-tab-inner"><span class="admin-tab-text">Errors</span><span class="admin-tab-badge" hidden aria-hidden="true"></span></span></button>
+                <button type="button" class="admin-tab admin-tab-dev-only" data-tab="aerialCatalog" onclick="switchTab('aerialCatalog', this)">Aerial catalog</button>
+                <button type="button" class="admin-tab admin-tab-dev-only" data-tab="appSettings" onclick="switchTab('appSettings', this)">App Settings</button>
+            </div>
+            <div class="admin-tabs-mobile">
+                <label for="adminTabSelect" class="admin-tab-select-label">Section</label>
+                <select id="adminTabSelect" class="admin-form-input admin-tab-select" aria-label="Admin section"></select>
+            </div>
+            <div class="admin-toolbar-actions">
+                <button type="button" id="adminThemeToggle" class="admin-button admin-button-secondary admin-theme-toggle" aria-pressed="false">Light mode</button>
+                <button type="button" class="admin-button admin-button-secondary" onclick="window.location.href='index.html'">Exit</button>
+            </div>
+        </div>
+
+        <!-- Users Tab -->
+        <div id="usersTab" class="admin-content">
+            <div class="admin-card">
+                <div class="admin-card-header">
+                    <h2 class="admin-card-title">Users</h2>
+                    <button class="admin-button admin-button-primary" onclick="openCreateUserModal()">+ Create User</button>
+                </div>
+                <div class="admin-list-toolbar">
+                    <input type="search" id="usersSearchInput" class="admin-form-input admin-list-search-input" placeholder="Search users…" aria-label="Search users" onkeydown="onAdminListSearchKeydown(event, 'users', 'usersSearchInput')" />
+                    <button type="button" class="admin-button admin-button-secondary" onclick="applyAdminListSearch('users', 'usersSearchInput')">Search</button>
+                    <button type="button" class="admin-button admin-button-secondary" onclick="clearAdminListSearch('users', 'usersSearchInput')">Clear</button>
+                </div>
+                <div class="admin-table-scroll">
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th id="usersIdHeader" class="admin-dev-id-col" hidden>ID</th>
+                            <th>Username</th>
+                            <th>Email</th>
+                            <th id="usersTableRoleHeader">Role</th>
+                            <th>Last Login</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="usersTableBody">
+                        <tr class="admin-table-row-message">
+                            <td colspan="5" style="text-align: center; color: #666;">Loading...</td>
+                        </tr>
+                    </tbody>
+                </table>
+                </div>
+                <div id="usersPagination" class="admin-list-pagination" hidden></div>
+            </div>
+        </div>
+
+        <!-- Service Requests Tab -->
+        <div id="serviceRequestsTab" class="admin-content">
+            <div class="admin-card">
+                <div class="admin-card-header">
+                    <h2 class="admin-card-title">Service Requests</h2>
+                    <button class="admin-button admin-button-secondary" onclick="loadServiceRequests()">Refresh</button>
+                </div>
+                <div class="admin-sr-split">
+                    <div class="admin-sr-list-pane">
+                        <div id="serviceRequestsBulkBar" style="display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; margin: 0 0 1rem;">
+                            <button type="button" id="serviceRequestsSelectPageBtn" class="admin-button admin-button-secondary" onclick="selectAllServiceRequestsOnPage()">Select all on page</button>
+                            <button type="button" id="serviceRequestsMarkReadSelectedBtn" class="admin-button admin-button-secondary" disabled onclick="bulkUpdateServiceRequestStatus('read')">Mark read selected</button>
+                            <button type="button" id="serviceRequestsResolveSelectedBtn" class="admin-button admin-button-primary" disabled onclick="bulkUpdateServiceRequestStatus('resolved')">Resolve selected</button>
+                            <button type="button" id="serviceRequestsUnresolveSelectedBtn" class="admin-button admin-button-secondary" disabled onclick="bulkUnresolveServiceRequests()">Unresolve selected</button>
+                            <button type="button" id="serviceRequestsDeleteSelectedBtn" class="admin-button admin-button-danger" disabled onclick="bulkDeleteServiceRequests()" style="display: none;">Delete selected</button>
+                            <span id="serviceRequestsBulkHint" style="font-size: 0.8rem; color: #666;"></span>
+                        </div>
+                        <div class="admin-table-scroll">
+                        <table class="admin-table">
+                            <thead>
+                                <tr>
+                                    <th scope="col" style="width: 2.5rem; text-align: center;" title="Select rows for bulk actions">
+                                        <input type="checkbox" id="serviceRequestsSelectAll" aria-label="Select all service requests on this page" onchange="toggleServiceRequestsSelectAll(this)" />
+                                    </th>
+                                    <th>ID</th>
+                                    <th>Type</th>
+                                    <th>User</th>
+                                    <th>Organization</th>
+                                    <th>Status</th>
+                                    <th>Date</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="serviceRequestsTableBody">
+                                <tr class="admin-table-row-message">
+                                    <td colspan="8" style="text-align: center; color: #666;">Loading...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        </div>
+                        <div id="serviceRequestsPagination" class="admin-list-pagination" hidden></div>
+                    </div>
+                    <div class="admin-sr-map-pane">
+                        <div id="adminServiceRequestsMap" class="admin-sr-map" aria-label="Service request locations"></div>
+                        <p id="adminServiceRequestsMapHint" class="admin-sr-map-hint" hidden></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Public sharing Tab -->
+        <div id="publicSharingTab" class="admin-content">
+            <div class="admin-card">
+                <div class="admin-card-header">
+                    <h2 class="admin-card-title">Public sharing</h2>
+                    <button type="button" class="admin-button admin-button-secondary" onclick="loadPublicSharingSettings()">Refresh</button>
+                </div>
+                <div id="publicSharingPanel">
+                    <p style="color: #666;">Public sharing uses your current organization.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Workflow Tab -->
+        <div id="workflowTab" class="admin-content">
+            <div class="admin-card">
+                <div class="admin-card-header">
+                    <h2 class="admin-card-title">Workflow acknowledgement</h2>
+                    <button type="button" class="admin-button admin-button-secondary" onclick="loadWorkflowSettings()">Refresh</button>
+                </div>
+                <div id="workflowPanel">
+                    <p style="color: #666;">Workflow settings use your current organization.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Errors (dev) -->
+        <div id="errorsTab" class="admin-content">
+            <div class="admin-card">
+                <div class="admin-card-header">
+                    <h2 class="admin-card-title">Application errors</h2>
+                    <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                        <select id="adminErrorsStatusFilter" class="admin-form-input" style="max-width: 180px;" onchange="loadAdminErrors()">
+                            <option value="open">Open</option>
+                            <option value="acknowledged">Acknowledged</option>
+                            <option value="all">All</option>
+                        </select>
+                        <button type="button" class="admin-button admin-button-secondary" onclick="loadAdminErrors()">Refresh</button>
+                    </div>
+                </div>
+                <div id="adminErrorsBulkBar" style="display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; margin: 0 0 1rem;">
+                    <button type="button" id="adminErrorsSelectPageBtn" class="admin-button admin-button-secondary" onclick="selectAllAdminErrorsOnPage()">Select all on page</button>
+                    <button type="button" id="adminErrorsAckSelectedBtn" class="admin-button admin-button-primary" disabled onclick="acknowledgeSelectedAdminErrors()">Acknowledge selected</button>
+                    <button type="button" id="adminErrorsDelSelectedBtn" class="admin-button admin-button-danger" disabled onclick="deleteSelectedAdminErrors()">Delete selected</button>
+                    <span id="adminErrorsBulkHint" style="font-size: 0.8rem; color: #666;"></span>
+                </div>
+                <p style="font-size: 0.85rem; color: #666; margin: 0 0 1rem;">Use the code or support ID a customer reports to find the internal error details.</p>
+                <div class="admin-table-scroll">
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th scope="col" style="width: 2.5rem; text-align: center;" title="Select rows for bulk actions">
+                                <input type="checkbox" id="adminErrorsSelectAll" aria-label="Select all errors on this page" onchange="toggleAdminErrorsSelectAll(this)" />
+                            </th>
+                            <th>ID</th>
+                            <th>Code</th>
+                            <th>Message</th>
+                            <th>Route</th>
+                            <th>Created</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="adminErrorsTableBody">
+                        <tr class="admin-table-row-message">
+                            <td colspan="7" style="text-align: center; color: #666;">Developer only.</td>
+                        </tr>
+                    </tbody>
+                </table>
+                </div>
+                <div id="adminErrorsPagination" class="admin-list-pagination" hidden></div>
+            </div>
+        </div>
+
+        <!-- Aerial catalog (dev) -->
+        <div id="aerialCatalogTab" class="admin-content">
+            <div class="admin-card">
+                <div class="admin-card-header">
+                    <h2 class="admin-card-title">Global aerial map catalog</h2>
+                    <div style="display:flex;gap:0.5rem;flex-wrap:wrap;">
+                        <button type="button" class="admin-button admin-button-primary" onclick="openAdminAddAerialModal()">+ Add map URL</button>
+                    </div>
+                </div>
+                <p style="font-size: 0.85rem; color: #666; margin: 0 0 1rem;">Search filters maps already in the catalog. Use <strong>Access</strong> to set Global, Restricted, or Hidden.</p>
+                <div class="admin-list-toolbar">
+                    <input type="search" id="aerialCatalogSearchInput" class="admin-form-input admin-list-search-input" placeholder="Search aerial maps…" aria-label="Search aerial catalog" onkeydown="onAdminListSearchKeydown(event, 'aerialCatalog', 'aerialCatalogSearchInput')" />
+                    <button type="button" class="admin-button admin-button-secondary" onclick="applyAdminListSearch('aerialCatalog', 'aerialCatalogSearchInput')">Search</button>
+                    <button type="button" class="admin-button admin-button-secondary" onclick="clearAdminListSearch('aerialCatalog', 'aerialCatalogSearchInput')">Clear</button>
+                </div>
+                <div class="admin-table-scroll">
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Name</th>
+                            <th>Capture</th>
+                            <th>Access</th>
+                            <th>URL</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="aerialCatalogTableBody">
+                        <tr class="admin-table-row-message">
+                            <td colspan="6" style="text-align: center; color: #666;">Loading...</td>
+                        </tr>
+                    </tbody>
+                </table>
+                </div>
+                <div id="aerialCatalogPagination" class="admin-list-pagination" hidden></div>
+            </div>
+        </div>
+
+        <!-- App Settings (dev) -->
+        <div id="appSettingsTab" class="admin-content">
+            <div class="admin-card">
+                <div class="admin-card-header">
+                    <h2 class="admin-card-title">App Settings</h2>
+                </div>
+                <p style="font-size: 0.85rem; color: #666; margin: 0 0 1rem;">These switches apply to every organization.</p>
+                <form class="admin-form" id="appSettingsForm" onsubmit="return false;" style="max-width: 520px;">
+                    <div class="admin-form-group">
+                        <label class="admin-form-label" for="showPublicSharingTabToggle" style="display:flex;align-items:center;gap:0.5rem;cursor:pointer;">
+                            <input type="checkbox" id="showPublicSharingTabToggle" checked />
+                            <span>Show Public sharing tab</span>
+                        </label>
+                        <p style="font-size: 0.75rem; color: #666; margin-top: 0.25rem;">When unchecked, the Public sharing tab is hidden for all admins.</p>
+                    </div>
+                    <div class="admin-form-group">
+                        <label class="admin-form-label" for="enableTicketActionsToggle" style="display:flex;align-items:center;gap:0.5rem;cursor:pointer;">
+                            <input type="checkbox" id="enableTicketActionsToggle" checked />
+                            <span>Enable ticket actions</span>
+                        </label>
+                        <p style="font-size: 0.75rem; color: #666; margin-top: 0.25rem;">When unchecked, renew, remark, create ticket, and the other ticket actions tied to this switch are hidden and blocked for everyone, including developers.</p>
+                    </div>
+                    <div class="admin-form-group">
+                        <label class="admin-form-label" for="hideSiteDocumentationToggle" style="display:flex;align-items:center;gap:0.5rem;cursor:pointer;">
+                            <input type="checkbox" id="hideSiteDocumentationToggle" />
+                            <span>Hide site documentation</span>
+                        </label>
+                        <p style="font-size: 0.75rem; color: #666; margin-top: 0.25rem;">When checked, Request Services is hidden and new requests cannot be sent. The Admin Service Requests list stays available.</p>
+                    </div>
+                    <div class="admin-form-group">
+                        <label class="admin-form-label" for="enableGuidedTourToggle" style="display:flex;align-items:center;gap:0.5rem;cursor:pointer;">
+                            <input type="checkbox" id="enableGuidedTourToggle" />
+                            <span>Guided tour</span>
+                        </label>
+                        <p style="font-size: 0.75rem; color: #666; margin-top: 0.25rem;">When checked, first-time users see the tour, and Take a tour appears in the User Guide.</p>
+                    </div>
+                    <div class="admin-form-group">
+                        <label class="admin-form-label" for="closeSignupsToggle" style="display:flex;align-items:center;gap:0.5rem;cursor:pointer;">
+                            <input type="checkbox" id="closeSignupsToggle" />
+                            <span>Close new signups</span>
+                        </label>
+                        <p style="font-size: 0.75rem; color: #666; margin-top: 0.25rem;">When checked, the signup link is hidden and new accounts cannot be created. People who already have a verification email can still finish it.</p>
+                    </div>
+                    <button type="button" class="admin-button admin-button-primary" onclick="saveAppSettings()">Save</button>
+                </form>
+                <p id="appSettingsStatus" style="font-size: 0.85rem; color: #c0392b; margin: 0.75rem 0 0;"></p>
+            </div>
+            <div class="admin-card" style="margin-top: 1.5rem;">
+                <div class="admin-card-header">
+                    <h2 class="admin-card-title">Shared service account</h2>
+                </div>
+                <p style="font-size: 0.85rem; color: #666; margin: 0 0 1rem; line-height: 1.45;">
+                    One USAN login for Locus. This account retrieves and matches tickets for the product. It is not managed per organization.
+                </p>
+                <p id="appSettingsServiceAccountHint" style="font-size: 0.8rem; color: #666; margin: 0 0 0.75rem;"></p>
+                <form class="admin-form" id="appSettingsServiceAccountForm" onsubmit="return false;" style="max-width: 520px;">
+                    <input type="hidden" id="appSettingsServiceAccountOrgId" value="" />
+                    <input type="hidden" id="appSettingsServiceAccountId" value="" />
+                    <div class="admin-form-group">
+                        <label class="admin-form-label" for="appSettingsServiceAccountLabel">Label (optional)</label>
+                        <input type="text" class="admin-form-input" id="appSettingsServiceAccountLabel" autocomplete="off" />
+                    </div>
+                    <div class="admin-form-group">
+                        <label class="admin-form-label" for="appSettingsServiceAccountUsername">USAN username *</label>
+                        <input type="text" class="admin-form-input" id="appSettingsServiceAccountUsername" autocomplete="off" data-lpignore="true" data-1p-ignore="true" data-bwignore="true" data-form-type="other" />
+                    </div>
+                    <div class="admin-form-group">
+                        <label class="admin-form-label" for="appSettingsServiceAccountPassword">USAN password</label>
+                        <input type="password" class="admin-form-input" id="appSettingsServiceAccountPassword" autocomplete="off" disabled data-lpignore="true" data-1p-ignore="true" data-bwignore="true" data-form-type="other" />
+                        <p style="font-size: 0.75rem; color: #666; margin-top: 0.25rem;">Required when adding the account. Leave blank when saving an existing account to keep the current password.</p>
+                    </div>
+                    <div class="modal-actions" style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
+                        <button type="button" class="admin-button admin-button-primary" onclick="saveSharedServiceAccount()">Save service account</button>
+                        <button type="button" class="admin-button admin-button-danger" id="appSettingsServiceAccountRemoveBtn" onclick="deleteSharedServiceAccount()" style="display: none;">Remove</button>
+                    </div>
+                </form>
+                <hr style="margin: 1.5rem 0; border: none; border-top: 1px solid #e0e0e0;" />
+                <div class="admin-card-header">
+                    <h3 class="admin-card-title" style="font-size: 1rem;">Sync</h3>
+                    <button type="button" class="admin-button admin-button-secondary" onclick="loadUsanSyncSettings()">Reload</button>
+                </div>
+                <p style="font-size: 0.85rem; color: #666; margin: 0 0 1rem;">
+                    Choose how far back sync should look when checking for tickets.
+                </p>
+                <p id="usanSyncSaveHint" style="display: none; font-size: 0.8rem; color: #666; margin: 0 0 0.75rem;">
+                    You can use this value for the next run, but only developers can save it permanently.
+                </p>
+                <p id="usanSyncStatus" style="font-size: 0.85rem; color: #c0392b; margin: 0 0 0.75rem;"></p>
+                <form class="admin-form" id="usanSyncForm" onsubmit="return false;" style="max-width: 420px;">
+                    <div class="admin-form-group">
+                        <label class="admin-form-label" for="usanSyncDaysBack">Days back (full window)</label>
+                        <input type="number" id="usanSyncDaysBack" class="admin-form-input" min="1" max="120" step="1" />
+                        <p id="usanSyncDevDaysHint" style="display: none; font-size: 0.8rem; color: #666; margin: 0.35rem 0 0;"></p>
+                    </div>
+                    <button type="button" class="admin-button admin-button-primary" id="usanSyncSaveBtn" onclick="saveUsanSyncSettings()">Save settings</button>
+                </form>
+                <h3 class="admin-card-title" style="font-size: 1rem; margin: 1.25rem 0 0.5rem;">Run full list sync</h3>
+                <p style="font-size: 0.85rem; color: #666; margin: 0 0 0.75rem;">
+                    Uses your current organization.
+                </p>
+                <label style="display:flex; align-items:center; gap:0.45rem; margin:0 0 0.75rem; font-size:0.85rem; color:#666;">
+                    <input type="checkbox" id="usanSyncForceRebuild" />
+                    Force rebuild existing rows instead of skipping unchanged tickets
+                </label>
+                <button type="button" class="admin-button admin-button-primary" id="usanSyncFullRunBtn" onclick="runAdminUsanFullSync()">Run full list sync</button>
+                <p id="usanSyncRunStatus" style="display:none; margin-top: 0.6rem; font-size: 0.85rem; color: #e5e5e5;"></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Create User Modal -->
+    <div id="createUserModal" class="modal-overlay" style="display: none;">
+        <div class="modal-content" onclick="event.stopPropagation()" style="max-width: 500px;">
+            <div class="modal-header">
+                <h2 class="modal-title">Create User</h2>
+                <button class="modal-close" onclick="closeCreateUserModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form class="admin-form" id="createUserForm">
+                    <div class="admin-form-group">
+                        <label class="admin-form-label">Username (optional)</label>
+                        <input type="text" class="admin-form-input" id="userUsername" autocomplete="off" data-lpignore="true" data-1p-ignore="true" data-bwignore="true" data-form-type="other" />
+                        <small style="color: #a3a3a3; font-size: 0.75rem; margin-top: 0.25rem; display: block;">If not provided, username will be auto-generated from email</small>
+                    </div>
+                    <div class="admin-form-group">
+                        <label class="admin-form-label">Email *</label>
+                        <input type="email" class="admin-form-input" id="userEmail" required autocomplete="off" data-lpignore="true" data-1p-ignore="true" data-bwignore="true" data-form-type="other" />
+                    </div>
+                    <div class="admin-form-group">
+                        <label class="admin-form-label">Password *</label>
+                        <input type="password" class="admin-form-input" id="userPassword" required autocomplete="off" disabled data-lpignore="true" data-1p-ignore="true" data-bwignore="true" data-form-type="other" />
+                    </div>
+                    <div class="admin-form-group">
+                        <label class="admin-form-label">Role *</label>
+                        <select class="admin-form-input" id="userRole" required>
+                            <option value="operator">Operator</option>
+                            <option value="admin">Admin</option>
+                        </select>
+                    </div>
+                    <div class="admin-form-group" id="userOrgGroup">
+                        <label class="admin-form-label">Organization</label>
+                        <select class="admin-form-input" id="userOrganization">
+                            <option value="">None</option>
+                        </select>
+                    </div>
+                    <div class="admin-form-group">
+                        <label class="admin-form-label">Full Name</label>
+                        <input type="text" class="admin-form-input" id="userFullName" autocomplete="off" data-lpignore="true" data-1p-ignore="true" data-bwignore="true" data-form-type="other" />
+                    </div>
+                    <div class="admin-form-group">
+                        <label class="admin-form-label">Phone</label>
+                        <input type="tel" class="admin-form-input" id="userPhone" maxlength="10" inputmode="numeric" pattern="[0-9]{10}" placeholder="10-digit mobile" autocomplete="tel" />
+                    </div>
+                    <div class="admin-form-group">
+                        <label class="admin-form-label">Language</label>
+                        <select class="admin-form-input" id="userLanguage">
+                            <option value="en">English</option>
+                            <option value="es">Spanish</option>
+                        </select>
+                    </div>
+                    <div class="modal-actions" style="display: flex; justify-content: flex-end; gap: 0.5rem; margin-top: 1rem;">
+                        <button type="button" class="admin-button admin-button-secondary" onclick="closeCreateUserModal()">Cancel</button>
+                        <button type="submit" class="admin-button admin-button-primary">Create</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add global aerial map (dev) -->
+    <div id="adminAddAerialModal" class="modal-overlay" style="display: none;" role="dialog" aria-modal="true">
+        <div class="modal-content" onclick="event.stopPropagation()" style="max-width: 520px;">
+            <div class="modal-header">
+                <h2 class="modal-title">Add aerial map</h2>
+                <button type="button" class="modal-close" onclick="closeAdminAddAerialModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form class="admin-form" id="adminAddAerialForm" onsubmit="return false;">
+                    <div class="admin-form-group">
+                        <label class="admin-form-label">Tileset URL (tilemapresource.xml) *</label>
+                        <input type="url" class="admin-form-input" id="adminAddAerialUrl" required placeholder="https://.../tilemapresource.xml" />
+                    </div>
+                    <div class="admin-form-group">
+                        <label class="admin-form-label">Captured at (optional)</label>
+                        <input type="datetime-local" class="admin-form-input" id="adminAddAerialCaptured" />
+                    </div>
+                    <div class="modal-actions" style="display: flex; justify-content: flex-end; gap: 0.5rem; margin-top: 1rem;">
+                        <button type="button" class="admin-button admin-button-secondary" onclick="closeAdminAddAerialModal()">Cancel</button>
+                        <button type="button" class="admin-button admin-button-primary" onclick="submitAdminAddAerial()">Add</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Aerial map org access (dev) -->
+    <div id="adminAerialOrgsModal" class="modal-overlay" style="display: none;" role="dialog" aria-modal="true">
+        <div class="modal-content" onclick="event.stopPropagation()" style="max-width: 520px;">
+            <div class="modal-header">
+                <h2 class="modal-title" id="adminAerialOrgsModalTitle">Manage org access</h2>
+                <button type="button" class="modal-close" onclick="closeAerialCatalogOrgsModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p style="font-size: 0.85rem; color: #666; margin: 0 0 0.75rem;">Select organizations that can see this map when access is Restricted.</p>
+                <input type="search" id="adminAerialOrgsSearch" class="admin-form-input" placeholder="Search organizations…" oninput="onAerialCatalogOrgsSearchInput()" />
+                <div id="adminAerialOrgsList" style="max-height: 320px; overflow: auto; margin-top: 0.75rem;"></div>
+                <div class="modal-actions" style="display: flex; justify-content: flex-end; gap: 0.5rem; margin-top: 1rem;">
+                    <button type="button" class="admin-button admin-button-secondary" onclick="closeAerialCatalogOrgsModal()">Cancel</button>
+                    <button type="button" class="admin-button admin-button-primary" onclick="submitAerialCatalogOrgsModal()">Save</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- App dialog (alert / confirm / prompt) -->
+    <div class="modal-overlay" id="appDialogOverlay" style="display: none;" aria-hidden="true" role="dialog" aria-modal="true">
+        <div class="modal-content" onclick="event.stopPropagation()" style="max-width: 520px;">
+            <div class="modal-header">
+                <h2 class="modal-title" id="appDialogTitle">Notice</h2>
+                <button type="button" class="modal-close" id="appDialogCloseBtn" aria-label="Close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div id="appDialogMessage" class="app-dialog-message"></div>
+                <div id="appDialogInputWrap" style="display: none; margin-top: 1rem;">
+                    <input type="search" id="appDialogInput" name="app-dialog-field" inputmode="text" enterkeyhint="done" autocomplete="off" autocapitalize="words" spellcheck="true" data-lpignore="true" data-form-type="other" class="app-dialog-input" />
+                    <textarea id="appDialogTextarea" style="display: none;" rows="4" autocomplete="off" data-lpignore="true" data-form-type="other" class="app-dialog-textarea"></textarea>
+                </div>
+                <div class="modal-actions" id="appDialogActions" style="display: flex; gap: 0.5rem; justify-content: flex-end; margin-top: 1.5rem; flex-wrap: wrap;"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="js/app-admin.bundle.js"></script>
+</body>
+</html>
+

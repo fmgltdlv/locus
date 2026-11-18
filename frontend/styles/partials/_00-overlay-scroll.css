@@ -1,0 +1,91 @@
+/* Custom overlay scrollbar — native bar hidden; JS-driven thumb fades in/out over content */
+
+.app-overlay-scroll {
+    overflow-x: hidden;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+
+.app-overlay-scroll::-webkit-scrollbar {
+    display: none;
+    width: 0;
+    height: 0;
+}
+
+.app-overlay-scroll-x {
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+
+.app-overlay-scroll-x::-webkit-scrollbar {
+    display: none;
+    width: 0;
+    height: 0;
+}
+
+.app-overlay-scroll-thumb {
+    position: absolute;
+    width: 8px;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--app-scrollbar-thumb) 55%, transparent);
+    box-shadow: 0 0 6px color-mix(in srgb, var(--app-scrollbar-thumb) 28%, transparent);
+    opacity: 0;
+    transition: opacity 240ms ease;
+    pointer-events: auto;
+    touch-action: none;
+    cursor: ns-resize;
+    z-index: 20;
+    will-change: opacity, top;
+}
+
+.app-overlay-scroll-thumb--visible {
+    opacity: 1;
+}
+
+.app-overlay-scroll-thumb--dragging {
+    width: 10px;
+    background: color-mix(in srgb, var(--app-scrollbar-thumb) 72%, transparent);
+}
+
+.app-overlay-scroll-thumb--horizontal {
+    height: 8px;
+    width: 28px;
+    cursor: ew-resize;
+    will-change: opacity, left;
+}
+
+.app-overlay-scroll-thumb--horizontal.app-overlay-scroll-thumb--dragging {
+    height: 10px;
+    width: auto;
+}
+
+.app-overlay-scroll:hover .app-overlay-scroll-thumb--visible,
+.app-overlay-scroll-x:hover .app-overlay-scroll-thumb--visible {
+    background: color-mix(in srgb, var(--app-scrollbar-thumb) 58%, transparent);
+}
+
+/* Ticket sidebar: cards full width; thumb floats over the right edge */
+.ticket-list-content.app-overlay-scroll {
+    padding-right: 0;
+}
+
+.ticket-list-scroll-container > .app-overlay-scroll-thumb[data-overlay-scroll-axis="y"] {
+    width: 8px;
+    z-index: 12;
+    background: color-mix(in srgb, var(--app-scrollbar-thumb) 64%, transparent);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .app-overlay-scroll-thumb {
+        transition: none;
+    }
+
+    .app-overlay-scroll-thumb--visible {
+        background: color-mix(in srgb, var(--app-scrollbar-thumb) 60%, transparent);
+    }
+}

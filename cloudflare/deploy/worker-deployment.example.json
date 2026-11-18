@@ -1,0 +1,13 @@
+{
+  "_comment": "Copy to worker-deployment.json and fill in. Mirror these values in wrangler.toml for D1.",
+  "workerName": "your-worker-name",
+  "workersDevUrl": "https://your-worker-name.YOUR_SUBDOMAIN.workers.dev",
+  "workerOrigin": "https://your-worker-name.YOUR_SUBDOMAIN.workers.dev",
+  "d1": {
+    "binding": "DB",
+    "databaseName": "your-d1-database-name",
+    "databaseId": "00000000-0000-0000-0000-000000000000"
+  },
+  "pagesFrontendUrl": "https://your-pages-project.pages.dev",
+  "notes": "The browser never connects to D1. Only the Worker uses D1 via wrangler.toml [[d1_databases]]. Point the frontend at workersDevUrl (scheme + host, no trailing slash) as API_BASE_URL."
+}

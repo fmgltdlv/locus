@@ -1,0 +1,16 @@
+{
+  "name": "locus-frontend-pages",
+  "private": true,
+  "scripts": {
+    "build:frontend": "npm run build --prefix ../../frontend",
+    "build:frontend:staging": "npm run build:staging --prefix ../../frontend",
+    "build:frontend:core": "npm run build:core --prefix ../../frontend",
+    "deploy": "npm run build:frontend && wrangler pages deploy ../../frontend/dist --project-name=locus",
+    "deploy:staging": "npm run build:frontend:staging && wrangler pages deploy ../../frontend/dist --project-name=locus-staging --commit-dirty=true && node scripts/purge-staging-cache.mjs",
+    "deploy:core": "npm run deploy:core --prefix ../deploy",
+    "purge:staging-cache": "node scripts/purge-staging-cache.mjs"
+  },
+  "devDependencies": {
+    "wrangler": "^3.114.0"
+  }
+}

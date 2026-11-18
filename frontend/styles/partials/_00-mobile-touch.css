@@ -1,0 +1,10 @@
+/* Logged-in mobile touch: strict guard blocks double-tap zoom; Leaflet owns map gestures. */
+@media (pointer: coarse) {
+    html[data-pinch-guard="strict"] {
+        touch-action: manipulation;
+    }
+
+    html[data-pinch-zoom-policy="user-pref"] .leaflet-container {
+        touch-action: none;
+    }
+}

@@ -1,0 +1,26 @@
+{
+  "name": "locus",
+  "private": true,
+  "description": "Convenience scripts for the Worker API and static frontend (see docs/SETUP.md).",
+  "scripts": {
+    "dev:api": "npm run dev --prefix cloudflare/deploy",
+    "dev:ui": "npx --yes serve frontend -p 3000",
+    "typecheck": "npm run typecheck --prefix cloudflare/deploy",
+    "build:ui": "npm run dev:bundles --prefix frontend",
+    "check:source-text": "node scripts/check-source-text.mjs",
+    "check:innerhtml-escape": "node scripts/check-innerhtml-escape.mjs",
+    "check:migrations": "node scripts/check-migrations-path.mjs",
+    "impact:diff": "node scripts/check-impact-diff.mjs",
+    "check:route-undef": "node scripts/check-route-undef.mjs",
+    "check:public": "node scripts/check-public-release.mjs",
+    "ci": "npm run check:public && npm run check:source-text && npm run check:innerhtml-escape && npm run check:migrations && npm run check:route-undef && npm run typecheck && npm run build:ui",
+    "check:impact": "npm run impact:diff && npm run ci",
+    "build:dig-site-data": "node scripts/build-dig-site-reference-data.mjs",
+    "deploy:staging": "npm run deploy:staging:api && npm run deploy:staging:ui",
+    "deploy:staging:api": "npm run deploy:staging --prefix cloudflare/deploy",
+    "deploy:staging:ui": "npm run deploy:staging --prefix cloudflare/frontend-pages",
+    "deploy:core": "npm run deploy:core --prefix cloudflare/deploy",
+    "deploy:core:api": "npm run deploy:core --prefix cloudflare/deploy",
+    "deploy:core:ui": "npm run deploy:core --prefix cloudflare/deploy"
+  }
+}

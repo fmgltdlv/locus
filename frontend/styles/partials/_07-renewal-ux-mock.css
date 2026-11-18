@@ -1,0 +1,452 @@
+/* Renewal locate UX mocks (Phase 0+): overlays in map + hub; standalone demo page. */
+
+.renewal-mock-page {
+  min-height: 100vh;
+  padding: 1.25rem 1rem 2.5rem;
+  max-width: 52rem;
+  margin: 0 auto;
+  color: var(--app-text-primary, #e5e7eb);
+  font-family: ui-sans-serif, system-ui, sans-serif, "Segoe UI", Arial;
+}
+
+.renewal-mock-page-title {
+  font-size: 1.15rem;
+  margin: 0 0 0.35rem;
+  letter-spacing: 0.01em;
+}
+
+.renewal-mock-page-lede {
+  margin: 0 0 1.35rem;
+  font-size: 0.82rem;
+  color: var(--app-text-secondary, #9ca3af);
+  line-height: 1.45;
+}
+
+.renewal-mock-banner {
+  font-size: 0.74rem;
+  padding: 0.45rem 0.65rem;
+  border-radius: 0.35rem;
+  background: rgba(37, 99, 235, 0.12);
+  border: 1px solid rgba(59, 130, 246, 0.35);
+  color: var(--app-text-primary, #e5e7eb);
+  margin-bottom: 1.25rem;
+}
+
+.renewal-mock-demo-grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 640px) {
+  .renewal-mock-demo-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.renewal-mock-card {
+  background: var(--app-bg-surface-2, #111827);
+  border: 1px solid var(--app-border, #4b5563);
+  border-radius: 0.45rem;
+  padding: 0.85rem;
+}
+
+.renewal-mock-card-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.65rem;
+}
+
+.renewal-mock-card-head h4 {
+  margin: 0;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.renewal-mock-pseudo-popup {
+  background: rgba(15, 23, 42, 0.8);
+  border: 1px solid var(--app-border, #4b5563);
+  border-radius: 0.35rem;
+  padding: 0.55rem 0.65rem;
+  font-size: 0.72rem;
+  line-height: 1.4;
+}
+
+.ticket-popup-mock-workflow .ticket-popup-mock-inline-btns {
+  margin-left: 0;
+  margin-top: 0.4rem;
+}
+
+.renewal-mock-actions-stack {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin-top: 1rem;
+}
+
+.renewal-mock-muted {
+  color: var(--app-text-secondary, #9ca3af);
+  font-weight: normal;
+}
+
+.renewal-mock-panel--wide {
+  max-width: 42rem !important;
+}
+
+@media (max-width: 639px) {
+  .renewal-mock-panel--wide {
+    max-width: calc(100vw - 2rem) !important;
+  }
+}
+
+.renewal-mock-summary-grid {
+  margin: 0 1rem 0.85rem;
+  display: grid;
+  grid-template-columns: minmax(6rem, 9rem) 1fr;
+  gap: 0.35rem 0.75rem;
+  font-size: 0.76rem;
+  line-height: 1.45;
+}
+
+.renewal-mock-summary-grid dt {
+  color: var(--app-text-secondary, #9ca3af);
+}
+
+.renewal-mock-summary-grid dd {
+  margin: 0;
+}
+
+.renewal-mock-success-lead {
+  margin: 0.25rem 1rem 0.6rem;
+  font-size: 0.82rem;
+  color: var(--app-text-primary, #e5e7eb);
+}
+
+.renewal-mock-spinner-row {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  margin: 0.25rem 1rem 1rem;
+  font-size: 0.78rem;
+  color: var(--app-text-primary, #e5e7eb);
+}
+
+.renewal-mock-spinner {
+  width: 1.15rem;
+  height: 1.15rem;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  border-top-color: #60a5fa;
+  border-radius: 999px;
+  flex-shrink: 0;
+  animation: renewal-mock-spin 0.7s linear infinite;
+}
+
+@keyframes renewal-mock-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.renewal-mock-table-wrap {
+  margin: 0 1rem 0.75rem;
+  max-height: 12rem;
+  overflow: auto;
+  border-radius: 0.3rem;
+  border: 1px solid var(--app-border, #4b5563);
+}
+
+.renewal-mock-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.72rem;
+}
+
+.renewal-mock-table thead {
+  background: rgba(255, 255, 255, 0.04);
+  position: sticky;
+  top: 0;
+}
+
+.renewal-mock-table th,
+.renewal-mock-table td {
+  padding: 0.4rem 0.55rem;
+  text-align: left;
+  border-bottom: 1px solid rgba(75, 85, 99, 0.5);
+}
+
+.renewal-mock-table-row--warn td:last-child {
+  color: #fbbf24;
+}
+
+.renewal-mock-table-row--skip td:last-child {
+  color: var(--app-text-secondary, #9ca3af);
+}
+
+.renewal-mock-eligible-note {
+  color: var(--app-text-secondary, #9ca3af);
+  font-size: 0.92em;
+}
+
+.renewal-mock-progress {
+  margin: 0.25rem 1rem 0.5rem;
+  height: 0.42rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+  position: relative;
+}
+
+.renewal-mock-progress-bar {
+  height: 100%;
+  background: linear-gradient(90deg, #2563eb, #38bdf8);
+  border-radius: 999px;
+  transition: width 0.25s ease;
+}
+
+.renewal-mock-current-ticket {
+  margin: 0 1rem 0.85rem;
+  font-size: 0.74rem;
+}
+
+.renewal-mock-stat-strip {
+  list-style: none;
+  padding: 0 1rem;
+  margin: 0 0 0.75rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.85rem;
+  font-size: 0.78rem;
+}
+
+.renewal-mock-stat-strip li {
+  margin: 0;
+}
+
+.renewal-mock-fail-details {
+  margin: 0 1rem 0.75rem;
+  font-size: 0.75rem;
+  color: var(--app-text-primary, #e5e7eb);
+}
+
+.renewal-mock-fail-details summary {
+  cursor: pointer;
+  color: var(--app-text-secondary, #9ca3af);
+}
+
+.renewal-mock-fail-list {
+  margin: 0.45rem 0 0;
+  padding-left: 1.05rem;
+  color: #fecaca;
+  line-height: 1.5;
+}
+
+.renewal-mock-fail-list code {
+  font-size: 0.68rem;
+}
+
+.renewal-mock-poll-note {
+  max-width: 36rem;
+}
+
+.renewal-mock-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Bulk submit live progress (create + renewal) */
+.renewal-mock-progress-bar--active {
+  position: absolute;
+  top: 0;
+  left: 0;
+  background: linear-gradient(
+    90deg,
+    rgba(56, 189, 248, 0.35) 0%,
+    rgba(96, 165, 250, 0.85) 50%,
+    rgba(56, 189, 248, 0.35) 100%
+  );
+  background-size: 200% 100%;
+  animation: bulk-submit-progress-shimmer 1.2s ease-in-out infinite;
+  transition: margin-left 0.25s ease, width 0.25s ease;
+}
+
+@keyframes bulk-submit-progress-shimmer {
+  0% {
+    background-position: 100% 0;
+  }
+  100% {
+    background-position: -100% 0;
+  }
+}
+
+.bulk-submit-phase {
+  margin: 0 1rem 0.35rem;
+  font-size: 0.74rem;
+  color: var(--app-text-primary, #e5e7eb);
+}
+
+.bulk-submit-meta {
+  margin: 0 1rem 0.5rem;
+  font-size: 0.72rem;
+}
+
+.bulk-submit-dry-run-banner {
+  margin: 0 1rem 0.65rem;
+}
+
+.bulk-submit-queue {
+  list-style: none;
+  margin: 0 1rem 0.5rem;
+  padding: 0;
+  max-height: 7rem;
+  overflow: auto;
+  font-size: 0.72rem;
+  line-height: 1.45;
+}
+
+.bulk-submit-queue-item {
+  margin: 0;
+  padding: 0.15rem 0;
+  color: var(--app-text-primary, #e5e7eb);
+}
+
+.bulk-submit-queue-item--pending {
+  color: var(--app-text-secondary, #9ca3af);
+}
+
+.bulk-submit-queue-item--active {
+  color: #93c5fd;
+  font-weight: 600;
+}
+
+.bulk-submit-queue-item--done {
+  color: #86efac;
+}
+
+.bulk-submit-queue-item--fail {
+  color: #fca5a5;
+}
+
+.bulk-submit-queue-item--muted {
+  color: var(--app-text-secondary, #9ca3af);
+  font-style: italic;
+}
+
+.bulk-submit-queue-icon {
+  display: inline-block;
+  width: 1rem;
+  text-align: center;
+}
+
+/* Bulk renew/remark map-review floating panel */
+.ticket-bulk-map-review {
+  position: fixed;
+  top: 1rem;
+  right: 1rem;
+  z-index: 60055;
+  width: min(22rem, calc(100vw - 2rem));
+  max-height: calc(100vh - 2rem);
+  pointer-events: none;
+}
+
+.ticket-bulk-map-review-panel {
+  pointer-events: auto;
+  max-height: calc(100vh - 2rem);
+  overflow: auto;
+  background: var(--app-bg-surface-2, #111827);
+  border: 1px solid var(--app-border, #4b5563);
+  border-radius: 0.5rem;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.45);
+}
+
+.ticket-bulk-map-review-list {
+  list-style: none;
+  margin: 0 0.75rem 0.75rem;
+  padding: 0;
+  max-height: min(40vh, 18rem);
+  overflow: auto;
+  border: 1px solid var(--app-border, #374151);
+  border-radius: 0.35rem;
+}
+
+.ticket-bulk-map-review-item {
+  display: block;
+  padding: 0.55rem 0.65rem;
+  border-bottom: 1px solid var(--app-border, #374151);
+  cursor: pointer;
+  color: var(--app-text-primary, #e5e7eb);
+}
+
+.ticket-bulk-map-review-item:last-child {
+  border-bottom: none;
+}
+
+.ticket-bulk-map-review-item:hover {
+  background: rgba(59, 130, 246, 0.12);
+}
+
+.ticket-bulk-map-review-item.is-selected {
+  background: rgba(59, 130, 246, 0.22);
+}
+
+.ticket-bulk-map-review-item.is-disabled {
+  opacity: 0.65;
+  cursor: default;
+  pointer-events: none;
+}
+
+.ticket-bulk-map-review-item-main {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+  align-items: baseline;
+}
+
+.ticket-bulk-map-review-tn {
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.ticket-bulk-map-review-action {
+  font-size: 0.7rem;
+  color: var(--app-text-secondary, #9ca3af);
+}
+
+.ticket-bulk-map-review-cue {
+  margin-top: 0.2rem;
+  font-size: 0.65rem;
+  color: var(--app-text-secondary, #9ca3af);
+}
+
+.ticket-bulk-map-review-note {
+  margin: 0 0.75rem 0.75rem;
+}
+
+.ticket-bulk-map-review-footer {
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+@media (max-width: 768px) {
+  .ticket-bulk-map-review {
+    top: auto;
+    bottom: 0;
+    right: 0;
+    left: 0;
+    width: 100%;
+    max-height: 45vh;
+  }
+
+  .ticket-bulk-map-review-panel {
+    border-radius: 0.75rem 0.75rem 0 0;
+    max-height: 45vh;
+  }
+}

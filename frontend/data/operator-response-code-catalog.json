@@ -1,0 +1,106 @@
+{
+  "000": {
+    "short": "Incomplete",
+    "description": "Reserved for system use only"
+  },
+  "001": {
+    "short": "Clear",
+    "description": "Clear - No Conflict"
+  },
+  "002": {
+    "short": "Clear - Private utility in area",
+    "description": "No Conflict But Privately Owned Utility In Area - Contact Private Utility Owner"
+  },
+  "003": {
+    "short": "Markings adequate",
+    "description": "Site Visited - Existing Markings Adequate"
+  },
+  "004": {
+    "short": "No markings requested",
+    "description": "No Markings Requested"
+  },
+  "010": {
+    "short": "Area marked",
+    "description": "Locate Area Marked"
+  },
+  "011": {
+    "short": "Marked; abandoned facilities possible",
+    "description": "Locate Area Marked But Abandoned Facilities May Be In The Area"
+  },
+  "012": {
+    "short": "Marked - private facility in area",
+    "description": "Locate Area Marked Up To Private Owned Facility - Contact Private Utility Owner For Locate"
+  },
+  "014": {
+    "short": "Partially marked - Need more time",
+    "description": "Partially Marked - More Time is Needed"
+  },
+  "015": {
+    "short": "Marked - microtrenched",
+    "description": "Locate Area Marked - Microtrenched Facilities in the Area"
+  },
+  "020": {
+    "short": "Bad address - New ticket required",
+    "description": "Bad Address/Incorrect Street/Location Info - New Ticket Required"
+  },
+  "021": {
+    "short": "Additional access needed",
+    "description": "Unable To Locate - Additional Access Required - New Ticket Required"
+  },
+  "024": {
+    "short": "White paint unclear",
+    "description": "White Pre-Markings Unclear - New Ticket Required"
+  },
+  "031": {
+    "short": "Standby required - please schedule",
+    "description": "Requires Stand By At Time Of Excavation - Contact Facility Owner"
+  },
+  "033": {
+    "short": "High priority line",
+    "description": "Marked High Priority Line In Area"
+  },
+  "034": {
+    "short": "Field meet scheduled",
+    "description": "Field Meet Required - Locator Has Scheduled a Field Meet with Excavator"
+  },
+  "040": {
+    "short": "No marks needed - Excavator confirmed work complete",
+    "description": "No Marks Needed - Excavator Confirmed Work Completed"
+  },
+  "041": {
+    "short": "Excavator no-show for meet",
+    "description": "Excavator No Show For Meet"
+  },
+  "042": {
+    "short": "Request canceled by Excavator",
+    "description": "Excavator Canceled Request"
+  },
+  "050": {
+    "short": "Negotiated marking schedule",
+    "description": "Negotiated Marking Schedule"
+  },
+  "052": {
+    "short": "Trouble locate - Additional time required",
+    "description": "Trouble Locate - Additional Time Is Required"
+  },
+  "054": {
+    "short": "Could not contact - Not located",
+    "description": "Could Not Contact - Ticket Not Located - Please Contact Utility Directly & Update Contact Info With 811 & Create New Ticket"
+  },
+  "055": {
+    "short": "No facilities impacted by notification",
+    "description": "This Utility Operator Does Not Have Any Faciliites Impacted by the Damage or Exposed Request"
+  },
+  "555": {
+    "short": "Utility response disputed",
+    "description": "Utility Response Is Disputed"
+  },
+  "080": {
+    "short": "Weather/emergency delay",
+    "description": "Extraordinary Circumstances Exist - No Locate Due To Weather/Emergency/Safety Conditions"
+  },
+  "999": {
+    "short": "No response in time",
+    "description": "Member did not respond by the required time (System use only)"
+  }
+}

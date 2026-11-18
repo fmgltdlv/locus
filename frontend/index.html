@@ -1,0 +1,2220 @@
+<!DOCTYPE html>
+<html lang="en" data-pinch-zoom-policy="user-pref">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <meta name="theme-color" content="#073047" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <link rel="apple-touch-icon" href="/assets/pwa/icon-192.png" />
+    <link rel="icon" href="/assets/logo-mark.svg" type="image/svg+xml" id="favicon" />
+    <!-- API URL: set once in js/config-override.js (not here). See DEPLOYMENT.md -->
+    <title>Locus</title>
+    <script>
+    (function () {
+        var themes = ['default', 'glass', 'outline', 'ember', 'slate', 'blueprint', 'contractor', 'console', 'landoffice', 'modern'];
+        var clsPrefix = 'app-theme-';
+        function readStoredTheme() {
+            try {
+                var u = localStorage.getItem('currentUser');
+                if (u) {
+                    var user = JSON.parse(u);
+                    if (user && user.id) {
+                        var raw = localStorage.getItem('userProfile_user_' + user.id);
+                        if (raw) {
+                            var o = JSON.parse(raw);
+                            if (o && o.uiTheme && themes.indexOf(o.uiTheme) !== -1) return o.uiTheme;
+                        }
+                    }
+                }
+            } catch (e) {}
+            try {
+                var appUi = localStorage.getItem('appUiTheme');
+                if (appUi && themes.indexOf(appUi) !== -1) return appUi;
+            } catch (e1) {}
+            return null;
+        }
+        var params = new URLSearchParams(window.location.search);
+        var fromUrl = params.get('theme');
+        var t = (fromUrl && themes.indexOf(fromUrl) !== -1) ? fromUrl : readStoredTheme();
+        if (!t) t = 'default';
+        themes.forEach(function (name) {
+            document.documentElement.classList.remove(clsPrefix + name);
+        });
+        document.documentElement.classList.add(clsPrefix + t);
+        var fontScales = ['compact', 'default', 'large', 'max'];
+        function normalizeFontScale(value) {
+            if (value === 'larger') return 'max';
+            return fontScales.indexOf(value) !== -1 ? value : 'default';
+        }
+        function readStoredFontScale() {
+            try {
+                var u = localStorage.getItem('currentUser');
+                if (u) {
+                    var user = JSON.parse(u);
+                    if (user && user.id) {
+                        var raw = localStorage.getItem('userProfile_user_' + user.id);
+                        if (raw) {
+                            var prof = JSON.parse(raw);
+                            if (prof && prof.fontSizeScale) {
+                                return normalizeFontScale(prof.fontSizeScale);
+                            }
+                        }
+                    }
+                }
+            } catch (e) {}
+            return 'default';
+        }
+        var fs = readStoredFontScale();
+        if (fs === 'default') {
+            document.documentElement.removeAttribute('data-font-scale');
+        } else {
+            document.documentElement.setAttribute('data-font-scale', fs);
+        }
+    })();
+    </script>
+    <script src="js/config-override.js"></script>
+    <script src="js/pwa-register.js"></script>
+    <script src="js/mobilePinchZoomGuard.js"></script>
+    <link rel="stylesheet" href="css/app-themes.css" />
+    
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
+    
+    <!-- EXIF.js for parsing photo metadata -->
+    <script src="https://cdn.jsdelivr.net/npm/exif-js@2.3.0/exif.js"></script>
+    
+    <!-- Custom Styles (uses CSS variables from css/app-themes.css) -->
+    <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+    <!-- In-app toast container -->
+    <div id="toastContainer" class="toast-container" aria-live="polite"></div>
+
+    <!-- App dialog (alert / confirm / prompt) — same modal pattern as other overlays -->
+    <div class="modal-overlay" id="appDialogOverlay" style="display: none;" aria-hidden="true" role="dialog" aria-modal="true">
+        <div class="modal-content" onclick="event.stopPropagation()" style="max-width: 520px;">
+            <div class="modal-header">
+                <h2 class="modal-title" id="appDialogTitle">Notice</h2>
+                <button type="button" class="modal-close" id="appDialogCloseBtn" aria-label="Close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div id="appDialogMessage" class="app-dialog-message"></div>
+                <div id="appDialogInputWrap" style="display: none; margin-top: 1rem;">
+                    <!-- type=search + attrs: mobile browsers often skip password autofill vs type=text -->
+                    <input type="search" id="appDialogInput" name="app-dialog-field" inputmode="text" enterkeyhint="done" autocomplete="off" autocapitalize="words" spellcheck="true" data-lpignore="true" data-form-type="other" class="app-dialog-input" />
+                    <textarea id="appDialogTextarea" style="display: none;" rows="4" autocomplete="off" data-lpignore="true" data-form-type="other" class="app-dialog-textarea"></textarea>
+                </div>
+                <div class="modal-actions" id="appDialogActions" style="display: flex; gap: 0.5rem; justify-content: flex-end; margin-top: 1.5rem; flex-wrap: wrap;"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Persistent file inputs for mobile (always in DOM so gallery/camera picker works reliably) -->
+    <!-- Persistent file input for gallery: accept includes .pdf so mobile opens Files/document picker (same as document upload). We filter to images in JS. -->
+    <input type="file" id="photoGalleryFileInput" accept=".pdf,.jpg,.jpeg,.png,.heic,.heif,.geojson,.json,.kml,.kmz,.zip,.shp" multiple class="photo-picker-input" aria-hidden="true" tabindex="-1">
+    <input type="file" id="photoCameraFileInput" accept="image/*" multiple capture="environment" class="photo-picker-input" aria-hidden="true" tabindex="-1">
+
+    <!-- Photo upload status indicator (mobile and desktop) -->
+    <div id="photoUploadStatus" class="photo-upload-status" aria-live="polite" style="display: none;">
+        <div class="photo-upload-status-spinner"></div>
+        <span class="photo-upload-status-text"></span>
+    </div>
+
+    <!-- In-page camera — fullscreen “native” style (HTTPS getUserMedia) -->
+    <div class="modal-overlay in-page-camera-overlay" id="inPageCameraOverlay" style="display: none;" role="dialog" aria-modal="true" aria-labelledby="inPageCameraTitle" aria-hidden="true">
+        <div class="in-page-camera-root" onclick="event.stopPropagation()">
+            <h2 id="inPageCameraTitle" class="in-page-camera-sr-only">In-app camera</h2>
+            <video id="inPageCameraVideo" class="in-page-camera-video" playsinline muted autoplay></video>
+            <div id="inPageCameraStakeLayer" class="in-page-camera-stake-layer" hidden aria-hidden="true">
+                <img id="inPageCameraStakeGhost" class="in-page-camera-stake-ghost" alt="" />
+            </div>
+            <div id="inPageCameraMicromap" class="in-page-camera-micromap" hidden aria-hidden="true">
+                <div id="inPageCameraMicromapMap" class="in-page-camera-micromap-map"></div>
+            </div>
+            <button type="button" id="inPageCameraGalleryBtn" class="in-page-camera-corner-btn in-page-camera-corner-btn--icon in-page-camera-gallery-btn" aria-label="Upload photos" hidden>
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                    <circle cx="8.5" cy="8.5" r="1.5"/>
+                    <polyline points="21 15 16 10 5 21"/>
+                </svg>
+            </button>
+            <div class="in-page-camera-top-bar">
+                <button type="button" id="inPageCameraCloseBtn" class="in-page-camera-corner-btn" aria-label="Close">&times;</button>
+                <p id="inPageCameraStakeLabel" class="in-page-camera-stake-label" hidden aria-live="polite"></p>
+                <p id="inPageCameraGpsAccuracy" class="in-page-camera-gps-accuracy" aria-live="polite" hidden>&mdash;</p>
+                <button type="button" id="inPageCameraSwitchBtn" class="in-page-camera-corner-btn in-page-camera-corner-btn--icon" aria-label="Switch camera">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                        <path d="M7 16V4m0 0L3 8m4-4l4 4M17 8v12m0 0l4-4m-4 4l-4-4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </button>
+            </div>
+            <div class="in-page-camera-bottom-dock">
+                <p id="inPageCameraUploadProgress" class="in-page-camera-progress" aria-live="polite">0 uploaded / 0 queued</p>
+                <div id="inPageCameraStakeOpacityWrap" class="in-page-camera-stake-opacity-wrap" hidden>
+                    <label for="inPageCameraStakeOpacity" class="in-page-camera-stake-opacity-label">Ghost opacity</label>
+                    <input type="range" id="inPageCameraStakeOpacity" class="in-page-camera-stake-opacity" min="15" max="85" value="40" aria-label="Ghost opacity" />
+                </div>
+                <button type="button" id="inPageCameraCaptureBtn" class="in-page-camera-shutter" disabled aria-label="Capture photo">
+                    <span class="in-page-camera-shutter-inner"></span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal -->
+    <div class="modal-overlay" id="modalOverlay" style="display: none;" onclick="closeModal()">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <div class="modal-header">
+                <h2 class="modal-title" id="modalTitle"></h2>
+                <button class="modal-close" onclick="closeModal()">&times;</button>
+            </div>
+            <div class="modal-body" id="modalBody"></div>
+        </div>
+    </div>
+
+    <!-- Hidden stubs for account / launcher menu item visibility -->
+    <span id="adminPanelMenuItem" style="display: none;" aria-hidden="true"></span>
+    <span id="profileGreeting" hidden aria-hidden="true"></span>
+
+    <!-- About Modal (user guide + 811 law + app info) -->
+    <div class="modal-overlay" id="userGuideModal" style="display: none;" role="dialog" aria-modal="true" aria-labelledby="userGuideModalTitle" onclick="closeAbout()">
+        <div class="modal-content settings-modal-content" onclick="event.stopPropagation()" style="max-width: 760px;">
+            <div class="modal-header">
+                <h2 class="modal-title" id="userGuideModalTitle">User Guide</h2>
+                <div class="modal-header-actions" style="display: flex; align-items: center; gap: 0.5rem;">
+                    <button type="button" id="userGuideTakeTourBtn" class="btn btn-secondary" hidden style="padding: 0.35rem 0.75rem; font-size: 0.8125rem; border-radius: 0.35rem; border: 1px solid #cbd5e1; background: #f8fafc; cursor: pointer;">Take a tour</button>
+                    <button type="button" class="modal-close" onclick="closeAbout()" aria-label="Close about">&times;</button>
+                </div>
+            </div>
+            <div class="settings-modal-tabs about-modal-tabs" role="tablist" aria-label="About sections">
+                <button type="button" class="settings-tab settings-tab--active" role="tab" id="aboutTabBtnGuide" data-about-tab="guide" aria-selected="true" aria-controls="aboutTabGuide">User Guide</button>
+                <button type="button" class="settings-tab" role="tab" id="aboutTabBtnLaw" data-about-tab="law" aria-selected="false" aria-controls="aboutTabLaw">811 Law</button>
+                <button type="button" class="settings-tab" role="tab" id="aboutTabBtnAbout" data-about-tab="about" aria-selected="false" aria-controls="aboutTabAbout">About</button>
+            </div>
+            <div class="modal-body user-guide-modal-body settings-modal-body">
+                <div id="aboutTabGuide" class="settings-tab-panel settings-tab-panel--active profile-section user-guide-content" role="tabpanel" aria-labelledby="aboutTabBtnGuide">
+                    <div id="userGuideToc" class="user-guide-toc">
+                        <p class="app-profile-hint user-guide-toc-intro">Choose a topic to learn how to use Locus. Tap Back anytime to return to this list.</p>
+                        <div class="user-guide-search">
+                            <label class="user-guide-search-label" for="userGuideSearch">Filter topics</label>
+                            <input type="search" id="userGuideSearch" class="form-input user-guide-search-input" placeholder="Type to narrow the list…" autocomplete="off" enterkeyhint="search" />
+                            <p id="userGuideSearchEmpty" class="app-profile-hint user-guide-search-empty" hidden>No topics match your search.</p>
+                        </div>
+                        <nav class="user-guide-toc-nav" aria-label="User guide topics">
+                            <button type="button" class="user-guide-toc-item" data-guide-section="getting-started" data-guide-icon="userGuide">
+                                <span class="user-guide-toc-item-icon" aria-hidden="true"></span>
+                                <span class="user-guide-toc-item-text">
+                                    <span class="user-guide-toc-item-title">Getting Started</span>
+                                    <span class="user-guide-toc-item-blurb">Org menu, Ticket Hub, Data Hub, and the map</span>
+                                </span>
+                            </button>
+                            <button type="button" class="user-guide-toc-item" data-guide-section="map" data-guide-icon="mapLayers">
+                                <span class="user-guide-toc-item-icon" aria-hidden="true"></span>
+                                <span class="user-guide-toc-item-text">
+                                    <span class="user-guide-toc-item-title">Map &amp; Organization</span>
+                                    <span class="user-guide-toc-item-blurb">Switch orgs, select tickets, filters, and layers</span>
+                                </span>
+                            </button>
+                            <button type="button" class="user-guide-toc-item" data-guide-section="ticket-hub" data-guide-icon="ticketHub" data-guide-keywords="create ticket renew remark bulk sync import">
+                                <span class="user-guide-toc-item-icon" aria-hidden="true"></span>
+                                <span class="user-guide-toc-item-text">
+                                    <span class="user-guide-toc-item-title">Ticket Hub</span>
+                                    <span class="user-guide-toc-item-blurb">Search, sync, assign, create, and bulk actions</span>
+                                </span>
+                            </button>
+                            <button type="button" class="user-guide-toc-item" data-guide-section="projects" data-guide-icon="document">
+                                <span class="user-guide-toc-item-icon" aria-hidden="true"></span>
+                                <span class="user-guide-toc-item-text">
+                                    <span class="user-guide-toc-item-title">Projects</span>
+                                    <span class="user-guide-toc-item-blurb">Group tickets by job name and track compliance</span>
+                                </span>
+                            </button>
+                            <button type="button" class="user-guide-toc-item" data-guide-section="ticket-detail" data-guide-icon="ticketHub">
+                                <span class="user-guide-toc-item-icon" aria-hidden="true"></span>
+                                <span class="user-guide-toc-item-text">
+                                    <span class="user-guide-toc-item-title">Ticket Details</span>
+                                    <span class="user-guide-toc-item-blurb">Details, Responses, Photos &amp; Events, and Notes</span>
+                                </span>
+                            </button>
+                            <button type="button" class="user-guide-toc-item" data-guide-section="statuses" data-guide-icon="mapPoint">
+                                <span class="user-guide-toc-item-icon" aria-hidden="true"></span>
+                                <span class="user-guide-toc-item-text">
+                                    <span class="user-guide-toc-item-title">Ticket Statuses and Colors</span>
+                                    <span class="user-guide-toc-item-blurb">Ready, Not Ready, Review Required, and more</span>
+                                </span>
+                            </button>
+                            <button type="button" class="user-guide-toc-item" data-guide-section="data-hub" data-guide-icon="dataHub">
+                                <span class="user-guide-toc-item-icon" aria-hidden="true"></span>
+                                <span class="user-guide-toc-item-text">
+                                    <span class="user-guide-toc-item-title">Data Hub</span>
+                                    <span class="user-guide-toc-item-blurb">Annotations, layers, photos, documents, and events</span>
+                                </span>
+                            </button>
+                            <button type="button" class="user-guide-toc-item" data-guide-section="photos-layers" data-guide-icon="camera">
+                                <span class="user-guide-toc-item-icon" aria-hidden="true"></span>
+                                <span class="user-guide-toc-item-text">
+                                    <span class="user-guide-toc-item-title">Photos &amp; Map Layers</span>
+                                    <span class="user-guide-toc-item-blurb">Ticket photos, overlays, and aerial imagery</span>
+                                </span>
+                            </button>
+                            <button type="button" class="user-guide-toc-item" data-guide-section="settings" data-guide-icon="settings">
+                                <span class="user-guide-toc-item-icon" aria-hidden="true"></span>
+                                <span class="user-guide-toc-item-text">
+                                    <span class="user-guide-toc-item-title">Settings</span>
+                                    <span class="user-guide-toc-item-blurb">Profile, language, map defaults, and ticket prefs</span>
+                                </span>
+                            </button>
+                            <button type="button" class="user-guide-toc-item" data-guide-section="roles" data-guide-icon="profile" data-guide-keywords="user roles permissions org user admin tech who can create renew remark">
+                                <span class="user-guide-toc-item-icon" aria-hidden="true"></span>
+                                <span class="user-guide-toc-item-text">
+                                    <span class="user-guide-toc-item-title">Roles &amp; Permissions</span>
+                                    <span class="user-guide-toc-item-blurb">Operator, Manager, Admin, and Tech roles in your company</span>
+                                </span>
+                            </button>
+                            <button type="button" class="user-guide-toc-item" data-guide-section="public-data" data-guide-icon="location">
+                                <span class="user-guide-toc-item-icon" aria-hidden="true"></span>
+                                <span class="user-guide-toc-item-text">
+                                    <span class="user-guide-toc-item-title">Public Data</span>
+                                    <span class="user-guide-toc-item-blurb">Search shared tickets and imagery in the map view</span>
+                                </span>
+                            </button>
+                            <button type="button" class="user-guide-toc-item" data-guide-section="offline" data-guide-icon="locationOff">
+                                <span class="user-guide-toc-item-icon" aria-hidden="true"></span>
+                                <span class="user-guide-toc-item-text">
+                                    <span class="user-guide-toc-item-title">Offline Use</span>
+                                    <span class="user-guide-toc-item-blurb">What stays available when the connection drops</span>
+                                </span>
+                            </button>
+                            <button type="button" class="user-guide-toc-item" data-guide-section="troubleshooting" data-guide-icon="reportEvent">
+                                <span class="user-guide-toc-item-icon" aria-hidden="true"></span>
+                                <span class="user-guide-toc-item-text">
+                                    <span class="user-guide-toc-item-title">Troubleshooting</span>
+                                    <span class="user-guide-toc-item-blurb">Stale data, sync, imagery, and common fixes</span>
+                                </span>
+                            </button>
+                        </nav>
+                    </div>
+
+                    <div id="userGuideArticles" class="user-guide-articles" hidden>
+                        <button type="button" class="user-guide-back" id="userGuideBackBtn" data-guide-back>
+                            <span aria-hidden="true">←</span> All topics
+                        </button>
+
+                        <article id="guide-getting-started" class="user-guide-article" data-guide-article="getting-started" hidden>
+                            <div class="profile-section-title">Getting Started</div>
+                            <p class="app-profile-hint">Locus is map-first: after you sign in, you work from the full-screen map rather than a permanent sidebar.</p>
+                            <ul class="app-profile-hint user-guide-status-list">
+                                <li><strong>Organization</strong> — You work in your signed-in organization. Ticket Hub and the map load that org’s data automatically.</li>
+                                <li><strong>Ticket Hub (top-left)</strong> — Open the ticket list to search, filter, sync, assign work, manage projects, and open ticket details.</li>
+                                <li><strong>Data Hub (top-left)</strong> — Manage annotations, data layers, photos, documents, and events.</li>
+                                <li><strong>Map</strong> — Tap a ticket bubble or polygon to open its detail panel. On desktop, the status filter bar shows per-status counts and filters what appears on the map.</li>
+                                <li><strong>Account menu</strong> — Open Settings, User Guide, Admin (if allowed), or log out.</li>
+                            </ul>
+                            <p class="app-profile-hint">Tech users may see a simpler map-focused experience (Ticket Hub and some filters can be hidden) so they can focus on assigned field work.</p>
+                        </article>
+
+                        <article id="guide-map" class="user-guide-article" data-guide-article="map" hidden>
+                            <div class="profile-section-title">Map &amp; Organization</div>
+                            <p class="app-profile-hint">The map is the main workspace. Ticket markers cluster at wider zooms; at closer zoom levels, ticket boundaries appear when geometry is available.</p>
+                            <ul class="app-profile-hint user-guide-status-list">
+                                <li><strong>Select a ticket</strong> — Click a polygon or 811 bubble to highlight it and open the detail panel (same tabs as Ticket Hub detail).</li>
+                                <li><strong>Status filter bar (desktop)</strong> — Click a status count to show or hide tickets of that status on the map. Counts mirror Ticket Hub stats.</li>
+                                <li><strong>Layer panel</strong> — Switch basemaps and toggle overlays such as Tickets, Drone Maps, and Photos.</li>
+                                <li><strong>Address search</strong> — Jump the map to an address or use current location when the browser allows it.</li>
+                                <li><strong>Org switch</strong> — Changing organization closes open ticket panels and reloads that org’s tickets so you do not keep looking at another company’s data.</li>
+                                <li><strong>Keyboard shortcuts</strong> — R resets to your default overview zoom; + / − zoom in or out. Arrow keys pan the map (3× faster with Shift); click the map first so it has focus.</li>
+                            </ul>
+                        </article>
+
+                        <article id="guide-ticket-hub" class="user-guide-article" data-guide-article="ticket-hub" hidden>
+                            <div class="profile-section-title">Ticket Hub</div>
+                            <p class="app-profile-hint">Ticket Hub is the place to manage your org’s tickets in a list, with search, filters, stats, and detail view.</p>
+                            <ul class="app-profile-hint user-guide-status-list">
+                                <li><strong>Tickets</strong> — Browse, search, and filter tickets. Open a row to see full detail beside (or below on mobile) the list.</li>
+                                <li><strong>Sync</strong> — The refresh control runs an external list sync (recent days, extending when overdue). You can start another sync after the current one finishes; it only blocks while a sync is already running.</li>
+                                <li><strong>Bulk actions</strong> — Select rows to update selected tickets from external services, clear the selection, or (when available) renew or delete.</li>
+                                <li><strong>Assign</strong> — Assign tickets to crew members from the list or detail view when you have permission.</li>
+                            </ul>
+                            <aside class="user-guide-callout" role="note">
+                                <strong class="user-guide-callout-title">Create &amp; renew</strong>
+                                <p class="user-guide-callout-body">Only company admins and managers can create tickets, renew, remark, amend, or submit related USAN actions when those features are enabled for your org. Operators and Techs cannot create or renew tickets.</p>
+                            </aside>
+                        </article>
+
+                        <article id="guide-projects" class="user-guide-article" data-guide-article="projects" hidden>
+                            <div class="profile-section-title">Projects</div>
+                            <p class="app-profile-hint">Projects group tickets that share a USAN job name, including blank projects you create before tickets arrive. Assign tickets to projects from ticket details (not a separate Ticket Hub tab).</p>
+                            <ul class="app-profile-hint user-guide-status-list">
+                                <li><strong>New project</strong> — Reserves a job name from Ticket Hub. Later USAN imports with a matching job name join that project automatically.</li>
+                                <li><strong>Membership</strong> — Open a ticket’s Projects field to view or change which projects it belongs to.</li>
+                            </ul>
+                        </article>
+
+                        <article id="guide-ticket-detail" class="user-guide-article" data-guide-article="ticket-detail" hidden>
+                            <div class="profile-section-title">Ticket Details</div>
+                            <p class="app-profile-hint">The map popup and Ticket Hub detail pane share the same four tabs. A yellow status dot appears on a tab when that area needs follow-up.</p>
+                            <ul class="app-profile-hint user-guide-status-list">
+                                <li><strong>Details</strong> — Core fields, assignment, dates, and related ticket info.</li>
+                                <li><strong>Responses</strong> — Operator / utility response rows. Dot when a response is not ready or needs review.</li>
+                                <li><strong>Photos &amp; Events</strong> — Ticket-area photos and related events. Dot when the org&apos;s photo/drone compliance requirement for the current revision is not met.</li>
+                                <li><strong>Notes</strong> — Org team notes. Opening the tab loads notes and marks them read. Owner-org members can add notes; shared/partner tickets are read-only. Dot when you have unread notes.</li>
+                            </ul>
+                            <p class="app-profile-hint">Default which tab opens first can be changed under Settings → Tickets.</p>
+                        </article>
+
+                        <article id="guide-statuses" class="user-guide-article" data-guide-article="statuses" hidden>
+                            <div class="profile-section-title">Ticket Statuses and Colors</div>
+                            <p class="app-profile-hint">Statuses are calculated when tickets load or refresh. The polygon color matches the status badge in the ticket list. Colors below match the map pins.</p>
+                            <ul class="user-guide-status-chip-list">
+                                <li class="user-guide-status-chip-row">
+                                    <span class="user-guide-status-chip" data-guide-pin-status="READY">
+                                        <span class="user-guide-status-chip-pin" aria-hidden="true"></span>
+                                        <span class="user-guide-status-chip-label">Ready</span>
+                                    </span>
+                                    <span class="user-guide-status-chip-text">The ticket is not expired, all known operator requirements are satisfied, and any required ticket-area photos are complete (or workflow is acknowledged).</span>
+                                </li>
+                                <li class="user-guide-status-chip-row">
+                                    <span class="user-guide-status-chip" data-guide-pin-status="NOT_READY">
+                                        <span class="user-guide-status-chip-pin" aria-hidden="true"></span>
+                                        <span class="user-guide-status-chip-label">Not Ready</span>
+                                    </span>
+                                    <span class="user-guide-status-chip-text">An operator response is still not ready, fewer responses were received than expected for the known station list, or the ticket is still waiting on operators in that sense.</span>
+                                </li>
+                                <li class="user-guide-status-chip-row">
+                                    <span class="user-guide-status-chip" data-guide-pin-status="EXPIRING_SOON">
+                                        <span class="user-guide-status-chip-pin" aria-hidden="true"></span>
+                                        <span class="user-guide-status-chip-label">Expiring Soon</span>
+                                    </span>
+                                    <span class="user-guide-status-chip-text">The ticket is not expired but its expiration calendar date is within the days your organization sets in Admin → Workflow (default 5). Not Ready takes priority over Expiring Soon.</span>
+                                </li>
+                                <li class="user-guide-status-chip-row">
+                                    <span class="user-guide-status-chip" data-guide-pin-status="ACTION_REQUIRED">
+                                        <span class="user-guide-status-chip-pin" aria-hidden="true"></span>
+                                        <span class="user-guide-status-chip-label">Review Required</span>
+                                    </span>
+                                    <span class="user-guide-status-chip-text">User-side follow-up after operators have done their part—for example, an operator response that needs review, or the 2-photo requirement for the current ticket revision is not met. It is not used when the gap is simply missing response rows vs expected stations.</span>
+                                </li>
+                                <li class="user-guide-status-chip-row">
+                                    <span class="user-guide-status-chip" data-guide-pin-status="EXPIRED">
+                                        <span class="user-guide-status-chip-pin" aria-hidden="true"></span>
+                                        <span class="user-guide-status-chip-label">Expired</span>
+                                    </span>
+                                    <span class="user-guide-status-chip-text">The ticket expiration date has passed.</span>
+                                </li>
+                                <li class="user-guide-status-chip-row">
+                                    <span class="user-guide-status-chip" data-guide-pin-status="CANCELLED">
+                                        <span class="user-guide-status-chip-pin" aria-hidden="true"></span>
+                                        <span class="user-guide-status-chip-label">Cancelled</span>
+                                    </span>
+                                    <span class="user-guide-status-chip-text">The upstream enquiry was cancelled, and the ticket is not yet expired.</span>
+                                </li>
+                            </ul>
+                            <p class="app-profile-hint">When multiple rules apply, the app uses this order: Expired, Cancelled, Not Ready, Expiring Soon, Review Required, then Ready.</p>
+                            <aside class="user-guide-callout user-guide-callout--warning" role="note">
+                                <strong class="user-guide-callout-title">Important</strong>
+                                <p class="user-guide-callout-body">Locus helps crews understand 811 responses more clearly, but it does not decide whether a crew is ready to dig. The field crew is responsible for reviewing the ticket, site conditions, utility responses, and applicable procedures before digging.</p>
+                            </aside>
+                        </article>
+
+                        <article id="guide-data-hub" class="user-guide-article" data-guide-article="data-hub" hidden>
+                            <div class="profile-section-title">Data Hub</div>
+                            <p class="app-profile-hint">Open Data Hub from the top-left button next to Ticket Hub. Use it to browse and manage field data that is not only the ticket list.</p>
+                            <ul class="app-profile-hint user-guide-status-list">
+                                <li><strong>Annotations</strong> — Map drawings and notes tied to locations.</li>
+                                <li><strong>Layers</strong> — Data layers you can turn on for the map.</li>
+                                <li><strong>Photos</strong> — Org photos (also see Photos &amp; Map Layers).</li>
+                                <li><strong>Documents</strong> — Files attached for the org or job context.</li>
+                                <li><strong>Events</strong> — Related field events tied to tickets or locations.</li>
+                            </ul>
+                            <p class="app-profile-hint">Use search and filters in Data Hub to narrow results. Refresh reloads the current Data Hub view.</p>
+                        </article>
+
+                        <article id="guide-photos-layers" class="user-guide-article" data-guide-article="photos-layers" hidden>
+                            <div class="profile-section-title">Photos &amp; Map Layers</div>
+                            <ul class="app-profile-hint user-guide-status-list">
+                                <li><strong>Ticket photos</strong> — Add or review ticket-area photos from the Photos &amp; Events tab. Your organization sets how many photos (and optionally drone maps) are required before marking Ready.</li>
+                                <li><strong>Capture</strong> — Prefer in-app camera when possible so GPS tagging is preserved. Choosing files from the device gallery may omit location.</li>
+                                <li><strong>Map photo overlay</strong> — With Photos turned on in the layer panel, photos load for the current map view at zoom 16+. Zoom in before expecting photo pins.</li>
+                                <li><strong>Drone / aerial overlays</strong> — Toggle Drone Maps in the layer panel when imagery exists for the area and date range.</li>
+                            </ul>
+                        </article>
+
+                        <article id="guide-settings" class="user-guide-article" data-guide-article="settings" hidden>
+                            <div class="profile-section-title">Settings</div>
+                            <p class="app-profile-hint">Open Settings from the account menu. Changes apply to your signed-in user.</p>
+                            <ul class="app-profile-hint user-guide-status-list">
+                                <li><strong>Profile</strong> — Name, phone (used as default contact mobile when creating USAN tickets), email, language (English or Spanish), and your role in the current organization.</li>
+                                <li><strong>Personalization</strong> — Theme and related display preferences.</li>
+                                <li><strong>Map</strong> — Default basemap, units, and default zoom.</li>
+                                <li><strong>Tickets</strong> — Default ticket list filter, which detail tab opens first, and Ticket Hub detail height on mobile.</li>
+                            </ul>
+                        </article>
+
+                        <article id="guide-roles" class="user-guide-article" data-guide-article="roles" hidden>
+                            <div class="profile-section-title">Roles &amp; Permissions</div>
+                            <p class="app-profile-hint">Your role is set per company (organization). It controls what you can see and do in that org. Your role for the current company is shown under Settings → Profile. Switching companies can change which role applies.</p>
+                            <aside class="user-guide-callout" role="note">
+                                <strong class="user-guide-callout-title">USAN ticket writes</strong>
+                                <p class="user-guide-callout-body">Only company admins and managers can create, renew, remark, amend, or submit related USAN ticket actions when those features are enabled. Operators and Techs cannot.</p>
+                            </aside>
+                            <ul class="app-profile-hint user-guide-status-list">
+                                <li><strong>Operator</strong> — Day-to-day ticket work for that company (import, sync, assignees, and notes) when enabled. Cannot create, renew, remark, amend, or submit related USAN ticket actions — those are for company admins and managers when enabled. Can add and edit company data (photos, annotations, events, layers) but cannot delete data. Can change who is assigned to a project.</li>
+                                <li><strong>Manager</strong> — Office/lead role: when create/renew features are enabled for the org, can create tickets, renew, remark, amend, and related USAN submits. Can edit and delete company data. Cannot access the Admin Panel or manage users and org settings.</li>
+                                <li><strong>Admin</strong> — Company admin: manage users and settings, assign tickets and projects, and set other members to Operator, Manager, Admin, or Tech. When create/renew features are enabled for the org, admins can create tickets, renew, remark, amend, and related USAN submits. Can edit and delete company data.</li>
+                                <li><strong>Tech</strong> — Field role: sees only tickets assigned to you that are not expired (partner tickets from other companies are hidden). Simpler map-focused UI. Can refresh tickets, acknowledge workflow steps, add notes, and add company data; can edit only data you created. Cannot create or renew tickets, import tickets, or delete data.</li>
+                            </ul>
+                            <p class="app-profile-hint">Ask a company admin or your supervisor if you need a different role.</p>
+                        </article>
+
+                        <article id="guide-public-data" class="user-guide-article" data-guide-article="public-data" hidden>
+                            <div class="profile-section-title">Public Data</div>
+                            <p class="app-profile-hint">When you select the Public Data organization, the app focuses on discovering shared content in the current map view rather than a full private Ticket Hub workflow.</p>
+                            <ul class="app-profile-hint user-guide-status-list">
+                                <li>Use Search to find shared tickets, photos, layers, and aerial imagery in the view.</li>
+                                <li>Zoom to level 16+ before searching so results are tied to a useful map extent.</li>
+                                <li>Ticket Hub and some status filters may be hidden in this mode—use map search and overlays instead.</li>
+                            </ul>
+                        </article>
+
+                        <article id="guide-offline" class="user-guide-article" data-guide-article="offline" hidden>
+                            <div class="profile-section-title">Offline Use</div>
+                            <p class="app-profile-hint">Locus can keep recently loaded ticket data available when your connection drops. On desktop, the status indicator in the ticket stats bar shows offline (wifi-off), syncing, or USAN activity. On mobile, an offline indicator appears near the top-left map controls.</p>
+                            <ul class="app-profile-hint user-guide-status-list">
+                                <li>Tickets and polygons already loaded for the current org may remain viewable offline.</li>
+                                <li>Assigned ticket packs may be prepared so field users can keep working without a live connection.</li>
+                                <li>Actions that need the server (sync, import, create, renew, most uploads) stay disabled until you are back online.</li>
+                                <li>When connectivity returns, cached data can sync; if something looks wrong after reconnecting, refresh Ticket Hub or reload the page.</li>
+                            </ul>
+                        </article>
+
+                        <article id="guide-troubleshooting" class="user-guide-article" data-guide-article="troubleshooting" hidden>
+                            <div class="profile-section-title">Troubleshooting</div>
+                            <ul class="app-profile-hint user-guide-status-list">
+                                <li><strong>Stale tickets</strong> — Run Ticket Hub sync, or open a ticket and update it from external services. Switching org and back also reloads that org’s list.</li>
+                                <li><strong>Sync button busy</strong> — Wait for the current sync to finish; then you can run sync again.</li>
+                                <li><strong>Missing photos on the map</strong> — Zoom to 16+, turn on the Photos overlay, and confirm photos exist for that area.</li>
+                                <li><strong>Aerial / drone imagery missing</strong> — Zoom in far enough and check that imagery exists for the selected date range.</li>
+                                <li><strong>Wrong org’s tickets</strong> — Confirm the organization menu selection; switching orgs reloads data for that org only.</li>
+                                <li><strong>UI language</strong> — Change language under Settings → Profile. Spanish copy is a first pass and may still be refined.</li>
+                            </ul>
+                        </article>
+                    </div>
+                </div>
+
+                <div id="aboutTabLaw" class="settings-tab-panel profile-section user-guide-content" role="tabpanel" aria-labelledby="aboutTabBtnLaw" hidden>
+                    <div class="profile-section-title">811 and Nevada Dig Law (NRS Chapter 455)</div>
+                    <p class="app-profile-hint">Nevada's Underground Utility Damage Prevention Act (<a href="https://www.leg.state.nv.us/NRS/NRS-455.html" target="_blank" rel="noopener noreferrer">NRS Chapter 455</a>) requires anyone who plans to excavate to contact Nevada 811 before digging. The goal is to have underground utilities located and marked so crews can dig safely around gas, electric, water, sewer, telecom, and other buried lines.</p>
+                    <ul class="app-profile-hint user-guide-status-list">
+                        <li><strong>Call or submit before you dig.</strong> Contact Nevada 811 (dial 811 or use the state's online locate request) at least two full working days before excavation, excluding weekends and legal holidays, unless a valid emergency exception applies.</li>
+                        <li><strong>Wait for the locate period.</strong> Do not begin excavation until the required notice period has passed and you have reviewed operator responses for your work area.</li>
+                        <li><strong>Respect the marks.</strong> Use the utility marks and response information as guides. Hand-dig or use other safe methods within the required tolerance zone near marked utilities.</li>
+                        <li><strong>Stop if you hit something unmarked.</strong> If you uncover an unmarked or unknown utility, stop work, protect the area, and notify the operator and Nevada 811 as required.</li>
+                        <li><strong>Re-notify when conditions change.</strong> Submit a new locate request when the scope, location, or timing of work changes enough that earlier marks or responses may no longer apply.</li>
+                    </ul>
+                    <p class="app-profile-hint">Locus helps organize tickets, photos, and 811 responses, but it does not replace Nevada 811 or operator locate services. Always follow NRS 455, your company procedures, and the actual utility responses before breaking ground.</p>
+                </div>
+
+                <div id="aboutTabAbout" class="settings-tab-panel profile-section user-guide-content" role="tabpanel" aria-labelledby="aboutTabBtnAbout" hidden>
+                    <div class="profile-section-title">About Locus</div>
+                    <p class="app-profile-hint">Locus is a shared workspace for excavation tickets and map-based field work: one place to organize locates, photos, layers, and 811 responses between the office and the crew.</p>
+                    <p class="app-profile-hint">Locus is shaped by real field workflows and ongoing input from crews, locators, and partners who use it every day. Thank you to everyone who shares feedback and helps improve the tool for the wider community.</p>
+                    <p class="app-profile-hint">Interactive maps are powered by <a href="https://leafletjs.com/" target="_blank" rel="noopener noreferrer">Leaflet</a>, an open-source JavaScript library for mobile-friendly maps. Basemap and imagery credits also appear in the map attribution control.</p>
+                    <p class="user-guide-last-updated" aria-live="polite">Last updated: July 26, 2026</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Settings Modal (unified: Profile, Personalization, Map, Tickets) -->
+    <div class="modal-overlay settings-modal-overlay" id="settingsModal" style="display: none;" role="dialog" aria-modal="true" aria-labelledby="settingsModalTitle">
+        <div class="modal-content settings-modal-content" onclick="event.stopPropagation()">
+            <div class="modal-header settings-modal-header">
+                <h2 class="modal-title" id="settingsModalTitle">Settings</h2>
+                <button type="button" class="modal-close" onclick="closeSettingsModal()" aria-label="Close settings">&times;</button>
+            </div>
+            <div class="settings-modal-tabs" role="tablist" aria-label="Settings categories">
+                <button type="button" class="settings-tab settings-tab--active" role="tab" id="settingsTabBtnProfile" data-settings-tab="profile" aria-selected="true" aria-controls="settingsTabProfile">Profile</button>
+                <button type="button" class="settings-tab" role="tab" id="settingsTabBtnPersonalization" data-settings-tab="personalization" aria-selected="false" aria-controls="settingsTabPersonalization">Personalization</button>
+                <button type="button" class="settings-tab" role="tab" id="settingsTabBtnMap" data-settings-tab="map" aria-selected="false" aria-controls="settingsTabMap">Map</button>
+                <button type="button" class="settings-tab" role="tab" id="settingsTabBtnTickets" data-settings-tab="tickets" aria-selected="false" aria-controls="settingsTabTickets">Tickets</button>
+            </div>
+            <div class="modal-body settings-modal-body">
+                    <div id="settingsTabProfile" class="settings-tab-panel settings-tab-panel--active profile-form" role="tabpanel" aria-labelledby="settingsTabBtnProfile">
+                        <section class="settings-card">
+                        <div class="form-group">
+                            <label class="form-label" for="profileName">Name</label>
+                            <input type="text" id="profileName" class="form-input" placeholder="Enter your name" autocomplete="name" />
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="profilePhone">Phone</label>
+                            <input type="tel" id="profilePhone" class="form-input" maxlength="10" inputmode="numeric" pattern="[0-9]{10}" placeholder="10-digit mobile" autocomplete="tel" />
+                            <p class="app-profile-hint">Used as the default principal contact mobile when creating USAN tickets.</p>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="profileEmail">Email</label>
+                            <input type="email" id="profileEmail" class="form-input" placeholder="Enter your email" readonly autocomplete="email" />
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" id="profileUserTypeLabel">Role in current organization</label>
+                            <p id="profileUserType" class="settings-role-value" data-role="operator">Operator</p>
+                        </div>
+                        </section>
+                        <section class="settings-card">
+                        <div class="profile-section-title">Change Password</div>
+                        <div class="form-group">
+                            <label class="form-label" for="profileCurrentPassword">Current Password</label>
+                            <input type="password" id="profileCurrentPassword" class="form-input" placeholder="Enter current password" autocomplete="current-password" disabled data-lpignore="true" data-1p-ignore="true" data-bwignore="true" data-form-type="other" />
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="profileNewPassword">New Password</label>
+                            <input type="password" id="profileNewPassword" class="form-input" placeholder="Enter new password" autocomplete="off" disabled data-lpignore="true" data-1p-ignore="true" data-bwignore="true" data-form-type="other" />
+                            <p class="app-profile-hint">At least 8 characters, with one number and one special character.</p>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="profileConfirmPassword">Confirm New Password</label>
+                            <input type="password" id="profileConfirmPassword" class="form-input" placeholder="Confirm new password" autocomplete="off" disabled data-lpignore="true" data-1p-ignore="true" data-bwignore="true" data-form-type="other" />
+                        </div>
+                        </section>
+                    </div>
+
+                    <div id="settingsTabPersonalization" class="settings-tab-panel profile-form" role="tabpanel" aria-labelledby="settingsTabBtnPersonalization" hidden>
+                        <section class="settings-card">
+                        <div class="form-group">
+                            <label class="form-label" for="profileLanguage">Language</label>
+                            <select id="profileLanguage" class="form-select" onchange="if(window.appI18n){window.appI18n.setLanguage(this.value);}">
+                                <option value="en">English</option>
+                                <option value="es">Spanish</option>
+                            </select>
+                            <p class="app-profile-hint">Applies to the map page. Spanish copy is pending native-speaker review.</p>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="profileUiTheme">UI design</label>
+                            <select id="profileUiTheme" class="form-select" onchange="if(window.applyAppTheme){applyAppTheme(this.value);}">
+                                <option value="default">Standard</option>
+                                <option value="glass">Frosted glass</option>
+                                <option value="outline">Outline minimal</option>
+                                <option value="ember">Ember (warm)</option>
+                                <option value="slate">Slate &amp; cyan</option>
+                                <option value="blueprint">Surveyor blueprint</option>
+                                <option value="contractor">Contractor block</option>
+                                <option value="console">Map console</option>
+                                <option value="landoffice">Land office</option>
+                                <option value="modern">Modern utility</option>
+                            </select>
+                            <p class="app-profile-hint">Change the feel of the app.</p>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="profileFontSize">Text size</label>
+                            <select id="profileFontSize" class="form-select" onchange="if(window.applyAppFontScale){applyAppFontScale(this.value);}">
+                                <option value="compact">Compact</option>
+                                <option value="default">Default</option>
+                                <option value="large">Large</option>
+                                <option value="max">Max</option>
+                            </select>
+                            <p class="app-profile-hint">Scales labels, ticket list, panels, and dialogs on the map page.</p>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label settings-check-label">
+                                <input type="checkbox" id="profileAllowPinchZoom" class="form-checkbox" />
+                                Allow pinch to zoom page
+                            </label>
+                            <p class="app-profile-hint">Off by default on touch devices. Map pinch zoom always works. Photo viewer uses +/− buttons.</p>
+                        </div>
+                        </section>
+                    </div>
+
+                    <div id="settingsTabMap" class="settings-tab-panel profile-form" role="tabpanel" aria-labelledby="settingsTabBtnMap" hidden>
+                        <section class="settings-card">
+                        <div class="form-group">
+                            <label class="form-label" for="settingsDefaultView">Default Map View</label>
+                            <select id="settingsDefaultView" class="form-select" onchange="if(window.applyMapTheme){applyMapTheme(this.value);}">
+                                <option value="default">Street Map</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="settingsUnits">Units</label>
+                            <select id="settingsUnits" class="form-select">
+                                <option value="imperial">Imperial (ft, mi)</option>
+                                <option value="metric">Metric (m, km)</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="settingsDefaultZoom">Default Zoom Level</label>
+                            <input type="number" id="settingsDefaultZoom" class="form-input" min="0" max="24" value="12" />
+                            <p class="app-profile-hint">Zoom level when map first loads (0-24)</p>
+                        </div>
+                        <div class="form-group core-hidden">
+                            <label class="form-label settings-check-label">
+                                <input type="checkbox" id="settingsDefaultLayerPhotos" class="form-checkbox" checked />
+                                Show Photos layer when map loads
+                            </label>
+                            <p class="app-profile-hint">If off, photo markers stay available from the layer panel but are hidden until you turn them on.</p>
+                        </div>
+                        <div class="form-group core-hidden">
+                            <label class="form-label settings-check-label">
+                                <input type="checkbox" id="settingsDefaultLayerAnnotations" class="form-checkbox" checked />
+                                Show Annotations layer when map loads
+                            </label>
+                            <p class="app-profile-hint">If off, drawings stay in the layer panel but are hidden until you enable them.</p>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label settings-check-label">
+                                <input type="checkbox" id="settingsDefaultFollowMe" class="form-checkbox" checked />
+                                Follow my location when tracking
+                            </label>
+                            <p class="app-profile-hint">When live location is on, keep the map centered on you. Turn this off if you prefer to pan freely.</p>
+                        </div>
+                        </section>
+                        <section class="settings-card">
+                        <div class="profile-section-title">Application</div>
+                        <div class="form-group">
+                            <label class="form-label settings-check-label">
+                                <input type="checkbox" id="settingsShowTooltips" class="form-checkbox" />
+                                Show tooltips
+                            </label>
+                            <p class="app-profile-hint">Display helpful tooltips on hover</p>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label settings-check-label">
+                                <input type="checkbox" id="settingsEnableAnimations" class="form-checkbox" />
+                                Enable map animations
+                            </label>
+                            <p class="app-profile-hint">Tile fades and animated moves or zooms. Turn off for snappier map interaction.</p>
+                        </div>
+                        <div class="form-group core-hidden">
+                            <label class="form-label settings-check-label">
+                                <input type="checkbox" id="settingsShowMeasureDisplay" class="form-checkbox" />
+                                Show measure display
+                            </label>
+                            <p class="app-profile-hint">Display measurement information on the map</p>
+                        </div>
+                        </section>
+                        <section class="settings-card" id="userManagementSection" style="display: none;">
+                            <div class="profile-section-title">User Management</div>
+                            <div class="form-group">
+                                <p class="app-profile-hint">Manage users and permissions</p>
+                                <button type="button" class="profile-button profile-button-primary settings-full-width-btn" onclick="openUserManagement()">
+                                    Open User Management
+                                </button>
+                            </div>
+                        </section>
+                    </div>
+
+                    <div id="settingsTabTickets" class="settings-tab-panel profile-form" role="tabpanel" aria-labelledby="settingsTabBtnTickets" hidden>
+                        <section class="settings-card">
+                        <div class="form-group">
+                            <label class="form-label" for="settingsDefaultTicketStatus">Default ticket status</label>
+                            <select id="settingsDefaultTicketStatus" class="form-select">
+                                <option value="ACTIVE">All Active</option>
+                                <option value="ALL">All statuses</option>
+                                <option value="ASSIGNED">Assigned</option>
+                                <option value="READY">Ready</option>
+                                <option value="NOT_READY">Not ready</option>
+                                <option value="ACTION_REQUIRED">Review required</option>
+                                <option value="EXPIRING_SOON">Expiring soon</option>
+                                <option value="EXTERNAL_ONLY">External</option>
+                                <option value="ACTIVE_INTERNAL">Internal</option>
+                            </select>
+                            <p class="app-profile-hint">Ticket list filter when you first open the app</p>
+                        </div>
+                        <div class="form-group core-hidden">
+                            <label class="form-label" for="settingsTicketDrawOverlayMode">While drawing a ticket</label>
+                            <select id="settingsTicketDrawOverlayMode" class="form-select">
+                                <option value="passthrough">Keep photos and annotations on the map, but block taps</option>
+                                <option value="hide">Hide photos and annotations until drawing ends</option>
+                            </select>
+                            <p class="app-profile-hint">Photo pins and annotation shapes either ignore taps or leave the map until you finish or cancel the ticket shape.</p>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="settingsTicketPhotoRecentDays">Photo date window</label>
+                            <select id="settingsTicketPhotoRecentDays" class="form-select">
+                                <option value="90">Last 90 days (default)</option>
+                                <option value="180">Last 180 days</option>
+                                <option value="365">Last 365 days</option>
+                                <option value="0">All photos</option>
+                            </select>
+                            <p class="app-profile-hint">Applies to map photo markers and all ticket photo views. Does not affect the 2-photo requirement or revision cutoff.</p>
+                        </div>
+                        <div class="form-group core-hidden">
+                            <label class="form-label" for="settingsMapRecentPhotosDaysBack">Map recent photos</label>
+                            <select id="settingsMapRecentPhotosDaysBack" class="form-select">
+                                <option value="0">Off</option>
+                                <option value="1">Today</option>
+                                <option value="7">Last 7 days (default)</option>
+                                <option value="30">Last 30 days</option>
+                                <option value="90">Last 90 days</option>
+                            </select>
+                            <p class="app-profile-hint">Shows recent org photos on the map in addition to ticket-scoped photos (zoom 16+).</p>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="settingsTicketDetailDefaultTab">Default ticket detail tab</label>
+                            <select id="settingsTicketDetailDefaultTab" class="form-select">
+                                <option value="responses">Operator responses (default)</option>
+                                <option value="details">Ticket details</option>
+                                <option value="notes">Notes</option>
+                            </select>
+                            <p class="app-profile-hint">Which tab opens first when you view a ticket in Ticket Hub or the map popup.</p>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="settingsTicketPopupMobileHeight">Popup panel height on mobile</label>
+                            <select id="settingsTicketPopupMobileHeight" class="form-select">
+                                <option value="half">Half screen (default)</option>
+                                <option value="full">Full screen</option>
+                            </select>
+                            <p class="app-profile-hint">How tall the map ticket popup is on small screens.</p>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="settingsTicketHubDetailMobileHeight">Ticket Hub detail height on mobile</label>
+                            <select id="settingsTicketHubDetailMobileHeight" class="form-select">
+                                <option value="half">Half screen (default)</option>
+                                <option value="full">Full screen</option>
+                            </select>
+                            <p class="app-profile-hint">Height of the Ticket Hub detail sheet when you tap a ticket row on mobile.</p>
+                        </div>
+                        </section>
+                    </div>
+            </div>
+            <div class="settings-modal-footer profile-actions">
+                <button type="button" class="profile-button profile-button-secondary" onclick="closeSettingsModal()">Cancel</button>
+                <button type="button" class="profile-button profile-button-primary" onclick="saveSettings()">Save Changes</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Export Options Modal -->
+    <div class="modal-overlay" id="exportOptionsModal" style="display: none;" role="dialog" aria-modal="true" aria-labelledby="exportOptionsModalTitle">
+        <div class="modal-content" onclick="event.stopPropagation()" style="max-width: 480px;">
+            <div class="modal-header">
+                <h2 class="modal-title" id="exportOptionsModalTitle">Export Options</h2>
+                <button type="button" class="modal-close" onclick="closeExportOptionsModal()" aria-label="Close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div id="exportGeoOptions">
+                    <div class="form-group">
+                        <label class="form-label" for="exportFormatSelect">Export Format</label>
+                        <select id="exportFormatSelect" class="form-select">
+                            <option value="geojson">GeoJSON</option>
+                            <option value="kml">KML</option>
+                            <option value="shp">SHP</option>
+                        </select>
+                    </div>
+                    <details id="exportAdvancedSettings" class="export-advanced-details">
+                        <summary class="export-advanced-summary">Advanced Settings</summary>
+                        <div class="export-advanced-body">
+                            <div class="form-group" id="exportFileModeGroup">
+                                <span class="form-label">File output</span>
+                                <div class="export-file-mode-options">
+                                    <label class="export-file-mode-option">
+                                        <input type="radio" name="exportFileMode" value="single" />
+                                        Single file
+                                    </label>
+                                    <label class="export-file-mode-option">
+                                        <input type="radio" name="exportFileMode" value="individual" checked />
+                                        Individual files
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">
+                                    <input type="checkbox" id="exportReprojectEnabled" class="form-checkbox" onchange="updateExportReprojectInputState()" />
+                                    Reproject to EPSG
+                                </label>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" for="exportTargetEpsg">Target EPSG</label>
+                                <input type="text" id="exportTargetEpsg" class="form-input" placeholder="EPSG:4326" disabled />
+                            </div>
+                        </div>
+                    </details>
+                </div>
+                <div id="exportPhotoOptions" style="display: none;">
+                    <div class="form-group">
+                        <label class="form-label" for="exportPhotoLayoutSelect">Layout</label>
+                        <select id="exportPhotoLayoutSelect" class="form-select">
+                            <option value="flat">All photos in one folder</option>
+                            <option value="by_batch">Group by upload batch</option>
+                        </select>
+                    </div>
+                    <div class="form-group export-photo-stamp-toggle">
+                        <label class="form-label">
+                            <input type="checkbox" id="exportPhotoStampEnabled" class="form-checkbox" onchange="updatePhotoStampPositionVisibility()" />
+                            Stamp date and GPS on exported photos
+                        </label>
+                        <p class="form-hint" style="margin: 0.35rem 0 0; font-size: 0.85em; opacity: 0.85;">Burns the stamp into the export files only. Photos in the app stay unstamped and show date/GPS as an overlay when viewing.</p>
+                    </div>
+                    <div class="form-group" id="exportPhotoStampPositionGroup" style="display: none;">
+                        <label class="form-label" for="exportPhotoStampPositionSelect">Stamp position</label>
+                        <select id="exportPhotoStampPositionSelect" class="form-select">
+                            <option value="top">At the top</option>
+                            <option value="bottom" selected>At the bottom</option>
+                            <option value="bottom_left">In the bottom left corner</option>
+                            <option value="bottom_right">In the bottom right corner</option>
+                            <option value="bottom_outside">At the bottom, not covering the photo</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">
+                            <input type="checkbox" id="exportPhotoEmbedGps" class="form-checkbox" />
+                            Embed GPS in photo files
+                        </label>
+                        <p class="form-hint" style="margin: 0.35rem 0 0; font-size: 0.85em; opacity: 0.85;">Writes coordinates into the photo so other apps can read them. Only for photos that have a location.</p>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="exportPhotoMetadataSelect">Location metadata</label>
+                        <select id="exportPhotoMetadataSelect" class="form-select" onchange="updatePhotoMetadataFormatHint()">
+                            <option value="none">None</option>
+                            <option value="csv" selected>CSV</option>
+                            <option value="geojson">GeoJSON</option>
+                            <option value="kml">KML</option>
+                            <option value="kmz">KMZ (Google Earth)</option>
+                        </select>
+                        <p id="exportPhotoMetadataHint" class="form-hint" style="display: none; margin: 0.35rem 0 0; font-size: 0.85em; opacity: 0.85;"></p>
+                    </div>
+                </div>
+                <div class="profile-actions" style="margin-top: 1.25rem;">
+                    <button type="button" class="profile-button profile-button-primary" onclick="confirmExportWithOptions()">Export</button>
+                    <button type="button" class="profile-button profile-button-secondary" onclick="closeExportOptionsModal()">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Photo export progress -->
+    <div class="modal-overlay photo-export-progress-overlay" id="photoExportProgressOverlay" style="display: none;" role="dialog" aria-modal="true" aria-live="polite" aria-busy="true" aria-labelledby="photoExportProgressTitle">
+        <div class="modal-content photo-export-progress-modal" onclick="event.stopPropagation()">
+            <div class="modal-body photo-export-progress-body">
+                <div class="photo-export-progress-spinner" aria-hidden="true"></div>
+                <h3 class="photo-export-progress-title" id="photoExportProgressTitle">Processing export</h3>
+                <p class="photo-export-progress-text" id="photoExportProgressText">Downloading images…</p>
+                <div class="photo-export-progress-bar-track" id="photoExportProgressBarTrack" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+                    <div class="photo-export-progress-bar-fill" id="photoExportProgressBarFill"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Annotation Modal -->
+    <div class="modal-overlay" id="annotationModal" style="display: none;">
+        <div class="modal-content" onclick="event.stopPropagation()" style="max-width: 500px;">
+            <div class="modal-header">
+                <h2 class="modal-title" id="annotationModalTitle">Add Annotation</h2>
+                <button class="modal-close" onclick="closeAnnotationModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div style="margin-bottom: 1rem;">
+                    <label style="display: block; margin-bottom: 0.5rem; font-size: 0.875rem; color: var(--app-text-secondary); font-weight: 500;">
+                        Name
+                    </label>
+                    <input type="text" id="annotationName" placeholder="Enter a name for this annotation..." autocomplete="off" data-lpignore="true" data-1p-ignore="true" data-bwignore="true" data-form-type="other"
+                           style="width: 100%; padding: 0.5rem; background: var(--app-bg-surface); border: 1px solid var(--app-border); border-radius: 0.25rem; color: var(--app-text-inverse); font-size: 0.875rem;">
+                </div>
+                <div style="margin-bottom: 1rem;">
+                    <label style="display: block; margin-bottom: 0.5rem; font-size: 0.875rem; color: var(--app-text-secondary); font-weight: 500;">
+                        Utility Type
+                    </label>
+                    <select id="annotationUtilityType" style="width: 100%; padding: 0.5rem; background: var(--app-bg-surface); border: 1px solid var(--app-border); border-radius: 0.25rem; color: var(--app-text-inverse); font-size: 0.875rem;">
+                        <option value="">Select utility type...</option>
+                    </select>
+                </div>
+                <div style="margin-bottom: 1rem;">
+                    <label style="display: block; margin-bottom: 0.5rem; font-size: 0.875rem; color: var(--app-text-secondary); font-weight: 500;">
+                        Icon
+                    </label>
+                    <div id="iconPicker" style="display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 0.5rem;"></div>
+                </div>
+                <div id="documentReferenceSection" style="margin-bottom: 1rem; display: none;">
+                    <label style="display: block; margin-bottom: 0.5rem; font-size: 0.875rem; color: var(--app-text-secondary); font-weight: 500;">
+                        Document Reference
+                    </label>
+                    <select id="annotationDocumentRef" style="width: 100%; padding: 0.5rem; background: var(--app-bg-surface); border: 1px solid var(--app-border); border-radius: 0.25rem; color: var(--app-text-inverse); font-size: 0.875rem;">
+                        <option value="">No document</option>
+                    </select>
+                </div>
+                <div style="margin-bottom: 1rem;">
+                    <label style="display: block; margin-bottom: 0.5rem; font-size: 0.875rem; color: var(--app-text-secondary); font-weight: 500;">
+                        Note
+                    </label>
+                    <textarea id="annotationNote" placeholder="Enter your note here..." rows="4"
+                              style="width: 100%; padding: 0.5rem; background: var(--app-bg-surface); border: 1px solid var(--app-border); border-radius: 0.25rem; color: var(--app-text-inverse); font-size: 0.875rem; resize: vertical;"></textarea>
+                </div>
+                <div id="annotationAttribution" style="display: none; margin-bottom: 1rem; font-size: 0.75rem; color: var(--app-text-secondary); line-height: 1.4;"></div>
+                <div style="display: flex; gap: 0.5rem; justify-content: flex-end; flex-wrap: wrap; align-items: center;">
+                    <button type="button" id="annotationDeleteBtn" onclick="deleteEditingAnnotation()" style="display: none; margin-right: auto; padding: 0.5rem 1rem; background: transparent; color: var(--app-danger); border: 1px solid var(--app-danger); border-radius: 0.25rem; cursor: pointer; font-size: 0.875rem;">
+                        Delete
+                    </button>
+                    <button class="button" onclick="closeAnnotationModal()" style="background: var(--app-bg-muted); color: var(--app-text-primary);">
+                        Cancel
+                    </button>
+                    <button type="button" class="button" id="annotationSaveKeepBtn" onclick="saveAnnotationAndKeepAnnotating()" style="display: none; background: var(--app-accent); color: var(--app-button-primary-text, var(--app-text-inverse));"
+                            title="Save this annotation and keep drawing more on the map without opening this form each time.">
+                        Keep annotating
+                    </button>
+                    <button type="button" class="button button-primary" id="annotationSaveBtn" onclick="saveAnnotation()">
+                        Save
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="map-app-container">
+        <div id="multiDrawBanner" class="multi-draw-banner" style="display: none;" role="status" aria-live="polite"
+             title="Draw on the map to add more annotations with the same style. Click Stop when finished.">
+            <span class="multi-draw-banner-text">Keep annotating</span>
+            <button type="button" class="multi-draw-banner-stop" id="multiDrawStopBtn">Stop</button>
+        </div>
+        <!-- Measure Display -->
+        <div id="measureDisplay" class="measure-display" style="display: none;"></div>
+        
+        <!-- Photo Viewer Modal -->
+        <div id="photoViewerModal" class="photo-viewer-modal">
+            <div class="photo-viewer-content">
+                <button class="photo-viewer-close" onclick="closePhotoViewer()">&times;</button>
+                <button type="button" class="photo-viewer-nav photo-viewer-nav--prev" id="photoViewerPrevBtn" aria-label="Previous photo" hidden onclick="stepPhotoViewerGallery(-1)">&#8249;</button>
+                <button type="button" class="photo-viewer-nav photo-viewer-nav--next" id="photoViewerNextBtn" aria-label="Next photo" hidden onclick="stepPhotoViewerGallery(1)">&#8250;</button>
+                <div class="photo-viewer-toolbar" id="photoViewerToolbar">
+                    <div class="photo-viewer-controls">
+                        <button class="photo-viewer-btn" onclick="zoomPhoto('in')" title="Zoom In">+</button>
+                        <button class="photo-viewer-btn" onclick="zoomPhoto('out')" title="Zoom Out">−</button>
+                        <button class="photo-viewer-btn" onclick="zoomPhoto('reset')" title="Reset Zoom">⌂</button>
+                    </div>
+                    <div class="photo-viewer-bottom-left photo-viewer-stake-actions" id="photoViewerBottomLeft" hidden>
+                        <button type="button" class="photo-viewer-btn photo-viewer-match-shot-btn" id="photoViewerMatchShotBtn" title="Match this shot" hidden>Match</button>
+                        <button type="button" class="photo-viewer-btn photo-viewer-compare-btn" id="photoViewerCompareBtn" title="Compare with original" hidden>Compare</button>
+                    </div>
+                </div>
+                <div class="photo-viewer-bottom-right" id="photoViewerBottomRight">
+                    <div class="photo-viewer-gallery-counter" id="photoViewerGalleryCounter" hidden aria-live="polite"></div>
+                </div>
+                <div class="photo-viewer-image-container" id="photoViewerImageContainer">
+                    <div id="photoViewerMicromap" class="photo-viewer-micromap in-page-camera-micromap" hidden aria-hidden="true">
+                        <div id="photoViewerMicromapMap" class="in-page-camera-micromap-map"></div>
+                    </div>
+                    <div id="photoViewerCompareWrap" class="photo-viewer-compare-wrap" hidden>
+                        <img id="photoViewerCompareOriginal" class="photo-viewer-compare-layer photo-viewer-compare-original" alt="Original" />
+                        <div id="photoViewerCompareClip" class="photo-viewer-compare-clip">
+                            <img id="photoViewerCompareRestake" class="photo-viewer-compare-layer photo-viewer-compare-restake" alt="Restake" />
+                        </div>
+                        <div id="photoViewerCompareHandle" class="photo-viewer-compare-handle" role="slider" aria-valuemin="0" aria-valuemax="100" aria-valuenow="50" aria-label="Compare slider"></div>
+                        <span class="photo-viewer-compare-label photo-viewer-compare-label--original">Original</span>
+                        <span class="photo-viewer-compare-label photo-viewer-compare-label--restake">Restake</span>
+                    </div>
+                    <img id="photoViewerImage" class="photo-viewer-image server-photo-image-hidden" alt="Photo" />
+                </div>
+            </div>
+        </div>
+
+        <div id="photoDetailsEditModal" class="modal-overlay photo-details-edit-modal" style="z-index: 63000; display: none;" aria-hidden="true">
+            <div class="modal-content photo-details-edit-modal-content" onclick="event.stopPropagation()" style="max-width: 480px;">
+                <div class="modal-header">
+                    <h2 class="modal-title">Notes and tags</h2>
+                    <button type="button" class="modal-close" id="photoDetailsEditModalClose" aria-label="Close">&times;</button>
+                </div>
+                <div class="modal-body photo-details-edit-modal-body">
+                    <label class="photo-details-edit-label" for="photoDetailsEditNote">Note</label>
+                    <textarea id="photoDetailsEditNote" class="photo-details-edit-textarea" rows="4" placeholder="Optional note"></textarea>
+                    <label class="photo-details-edit-label" for="photoDetailsEditTags">Tags</label>
+                    <div class="photo-tag-input-wrap">
+                        <input id="photoDetailsEditTags" class="photo-details-edit-tags-input" type="text" placeholder="White Paint, Pothole, Shallow" autocomplete="off" spellcheck="false" />
+                    </div>
+                    <div id="photoDetailsEditTagQuickPick" class="photo-tag-quick-pick-row" aria-label="Quick tag presets"></div>
+                </div>
+                <div class="modal-footer photo-details-edit-modal-footer">
+                    <button type="button" class="photo-details-edit-cancel-btn" id="photoDetailsEditCancelBtn">Cancel</button>
+                    <button type="button" class="photo-details-edit-save-btn" id="photoDetailsEditSaveBtn">Save</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="photoMapInfoModal" class="modal-overlay" onclick="closePhotoMapInfoModal()" style="z-index: 62000;">
+            <div class="modal-content photo-map-info-modal-content" onclick="event.stopPropagation()" style="max-width: 420px;">
+                <div class="modal-header">
+                    <h2 class="modal-title">Photo details</h2>
+                    <button type="button" class="modal-close" onclick="closePhotoMapInfoModal()" aria-label="Close">&times;</button>
+                </div>
+                <div class="modal-body" id="photoMapInfoModalBody"></div>
+            </div>
+        </div>
+        
+        <!-- Ticket Importer Modal -->
+        <div id="ticketImporterModal" class="modal-overlay" style="display: none;">
+            <div class="modal-content" onclick="event.stopPropagation()" style="max-width: 600px;">
+                <div class="modal-header">
+                    <h2 class="modal-title">Import Tickets from the Public Positive Response System</h2>
+                    <button class="modal-close" onclick="closeTicketImporter()">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <p id="ticketImporterOrgNote" style="font-size: 0.8125rem; color: var(--app-text-secondary); margin-bottom: 1rem;">Import loads the dig-site map shape from USAN. Ticket details and utility responses are not loaded in Locus — open USAN POSR for those. Full tickets with utilities still come from Ticket Hub Sync (USAN/nGen). Imports are stored in your currently selected organization.</p>
+                    <div style="margin-bottom: 1rem;">
+                        <label style="display: block; margin-bottom: 0.5rem; font-size: 0.875rem; color: var(--app-text-secondary); font-weight: 500;">
+                            Ticket Numbers
+                        </label>
+                        <textarea id="ticketImporterInput" placeholder="Enter ticket numbers, one per line or comma-separated&#10;Example:&#10;2025010100123&#10;2025010100124,2025010100125" 
+                                  style="width: 100%; padding: 0.5rem; background: var(--app-bg-surface); border: 1px solid var(--app-border); border-radius: 0.25rem; color: var(--app-text-inverse); font-size: 0.875rem; resize: vertical; min-height: 120px; font-family: monospace;"></textarea>
+                    </div>
+                    <div id="ticketImporterProgress" style="margin-bottom: 1rem; min-height: 100px; display: none; flex-direction: column; align-items: center; justify-content: center; background: var(--app-bg-page); padding: 2rem; border-radius: 0.25rem;">
+                        <div class="spinner" style="width: 40px; height: 40px; border: 4px solid var(--app-bg-muted); border-top: 4px solid var(--app-accent); border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 1rem;"></div>
+                        <div id="ticketImporterStatus" style="color: var(--app-text-secondary); font-size: 0.875rem; text-align: center;">Processing tickets...</div>
+                    </div>
+                    <style>
+                        @keyframes spin {
+                            0% { transform: rotate(0deg); }
+                            100% { transform: rotate(360deg); }
+                        }
+                    </style>
+                    <div class="modal-actions" style="display: flex; gap: 0.5rem; justify-content: flex-end;">
+                        <button class="button" onclick="closeTicketImporter()" style="background: var(--app-bg-muted); color: var(--app-text-primary);">
+                            Cancel
+                        </button>
+                        <button class="button" onclick="importTickets()" id="ticketImporterSubmit" style="background: var(--app-accent); color: var(--app-button-primary-text, var(--app-text-inverse));">
+                            Import Tickets
+                        </button>
+                    </div>
+                </div>
+        </div>
+    </div>
+
+        <!-- Create ticket: USAN SubmitCurrentUserEnquiryAsync JSON preview (no POST) -->
+        <div id="createTicketPayloadPreviewModal" class="modal-overlay create-ticket-payload-preview-overlay" style="display: none;" aria-hidden="true" onclick="if (event.target === this) closeUsanPayloadPreview()">
+            <div class="modal-content" onclick="event.stopPropagation()" style="max-width: 720px; max-height: 90vh; display: flex; flex-direction: column;">
+                <div class="modal-header">
+                    <h2 id="usanPayloadPreviewTitle" class="modal-title">USAN payload preview</h2>
+                    <button type="button" class="modal-close" onclick="closeUsanPayloadPreview()" aria-label="Close">&times;</button>
+                </div>
+                <div class="modal-body" style="flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 0.75rem;">
+                    <p id="usanPayloadPreviewHint" style="margin: 0; font-size: 0.9rem; color: var(--app-text-muted);">Preview only. <code>commencesOnDate</code> / <code>commencesOnTime</code> come from your planned work start; USAN applies legal start on submit. Use <strong>Submit</strong> in the create ticket flow to lodge tickets.</p>
+                    <textarea id="ctwPayloadPreviewText" readonly rows="18" style="flex: 1; min-height: 200px; width: 100%; font-family: ui-monospace, monospace; font-size: 12px; box-sizing: border-box; padding: 0.5rem;"></textarea>
+                    <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                        <button type="button" class="button button-primary" onclick="copyUsanPayloadPreview()">Copy JSON</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- DIRT Report Modal -->
+        <div id="dirtReportModal" class="modal-overlay" style="display: none;">
+            <div class="modal-content dirt-report-modal-content" onclick="event.stopPropagation()">
+                <div class="modal-header">
+                    <h2 class="modal-title">DIRT Event Report</h2>
+                    <button type="button" class="modal-close" onclick="closeDirtReportModal()" aria-label="Close">&times;</button>
+                </div>
+                <div class="modal-body" id="dirtReportContent">
+                    <!-- Content will be generated by JavaScript -->
+                </div>
+            </div>
+        </div>
+
+        <!-- DIRT nearby photo gallery picker -->
+        <div id="dirtReportPhotoGalleryModal" class="modal-overlay dirt-report-gallery-modal" style="display: none;" aria-hidden="true">
+            <div class="modal-content dirt-report-gallery-modal-content" onclick="event.stopPropagation()">
+                <div class="modal-header">
+                    <h2 class="modal-title">Choose from gallery</h2>
+                    <button type="button" class="modal-close" id="dirtReportPhotoGalleryClose" aria-label="Close">&times;</button>
+                </div>
+                <div class="modal-body dirt-report-gallery-modal-body">
+                    <div class="dirt-gallery-filter-row">
+                        <button type="button" class="dirt-gallery-filter-btn" id="dirtReportPhotoGalleryFilterAll" aria-pressed="true">All nearby</button>
+                        <button type="button" class="dirt-gallery-filter-btn" id="dirtReportPhotoGalleryFilterRestaked" aria-pressed="false">Restaked only</button>
+                    </div>
+                    <div id="dirtReportPhotoGalleryLoading" class="dirt-gallery-loading" role="status" aria-live="polite">
+                        <span class="server-photo-image-spinner" aria-hidden="true"></span>
+                        <span>Loading nearby photos…</span>
+                    </div>
+                    <p id="dirtReportPhotoGalleryEmpty" class="dirt-gallery-empty" hidden></p>
+                    <div id="dirtReportPhotoGalleryGrid" class="dirt-gallery-grid"></div>
+                </div>
+                <div class="modal-footer dirt-report-gallery-modal-footer">
+                    <button type="button" class="button" id="dirtReportPhotoGalleryCancel" style="background: var(--app-bg-muted); color: var(--app-text-primary);">Cancel</button>
+                    <button type="button" class="button button-primary" id="dirtReportPhotoGalleryAttach" style="background: var(--app-accent); color: var(--app-button-primary-text, var(--app-text-inverse));">Attach selected</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Operator Override Modal -->
+        <div id="operatorOverrideModal" class="modal-overlay" style="display: none;">
+            <div class="modal-content" onclick="event.stopPropagation()" style="max-width: 500px;">
+                <div class="modal-header">
+                    <h2 class="modal-title">Override Operator to Ready</h2>
+                    <button class="modal-close" onclick="closeOperatorOverrideModal()">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div style="margin-bottom: 1rem;">
+                        <label style="display: block; margin-bottom: 0.5rem; color: var(--app-text-primary); font-weight: 500;">
+                            Operator:
+                        </label>
+                        <div style="color: var(--app-text-secondary); font-size: 0.875rem;" id="overrideModalOperatorName"></div>
+                    </div>
+                    <div style="margin-bottom: 1rem;">
+                        <label style="display: block; margin-bottom: 0.5rem; color: var(--app-text-primary); font-weight: 500;">
+                            Override Note <span style="color: var(--app-danger);">*</span>:
+                        </label>
+                        <textarea 
+                            id="overrideModalNote" 
+                            placeholder="Enter a note explaining why this operator is being overridden to Ready (required)"
+                            required
+                            style="width: 100%; min-height: 120px; padding: 0.75rem; background: var(--app-bg-panel-input); border: 1px solid var(--app-border-soft); color: var(--app-text-primary); border-radius: 0.375rem; font-size: 0.875rem; font-family: inherit; resize: vertical;"
+                            onkeydown="if(event.key === 'Enter' && event.ctrlKey) { submitOperatorOverride(); }"
+                        ></textarea>
+                        <div style="margin-top: 0.25rem; font-size: 0.75rem; color: var(--app-text-secondary);">
+                            Press Ctrl+Enter to submit
+                        </div>
+                    </div>
+                    <div id="overrideModalPasswordGroup" style="display: none; margin-bottom: 1rem;">
+                        <label for="overrideModalPassword" style="display: block; margin-bottom: 0.5rem; color: var(--app-text-primary); font-weight: 500;">
+                            Your account password <span style="color: var(--app-danger);">*</span>
+                        </label>
+                        <input
+                            type="password"
+                            id="overrideModalPassword"
+                            autocomplete="off"
+                            disabled
+                            data-lpignore="true"
+                            data-1p-ignore="true"
+                            data-bwignore="true"
+                            data-form-type="other"
+                            placeholder="Required when overriding a Not Ready response"
+                            style="width: 100%; padding: 0.75rem; background: var(--app-bg-panel-input); border: 1px solid var(--app-border-soft); color: var(--app-text-primary); border-radius: 0.375rem; font-size: 0.875rem; font-family: inherit;"
+                        />
+                        <div style="margin-top: 0.25rem; font-size: 0.75rem; color: var(--app-text-secondary);">
+                            Confirms you authorize overriding a Not Ready operator response.
+                        </div>
+                    </div>
+                    <div class="modal-actions" style="display: flex; gap: 0.5rem; justify-content: flex-end; margin-top: 1.5rem;">
+                        <button class="button" onclick="closeOperatorOverrideModal()" style="background: var(--app-bg-muted); color: var(--app-text-primary);">
+                            Cancel
+                        </button>
+                        <button class="button" onclick="submitOperatorOverride()" style="background: var(--app-success); color: var(--app-text-inverse);">
+                            Override to Ready
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Photo Override Modal -->
+        <div id="photoOverrideModal" class="modal-overlay" style="display: none;">
+            <div class="modal-content" onclick="event.stopPropagation()" style="max-width: 500px;">
+                <div class="modal-header">
+                    <h2 class="modal-title">Override Photo Requirement to Ready</h2>
+                    <button class="modal-close" onclick="closePhotoOverrideModal()">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div style="margin-bottom: 1rem;">
+                        <label style="display: block; margin-bottom: 0.5rem; color: var(--app-text-primary); font-weight: 500;">
+                            Override Note <span style="color: var(--app-danger);">*</span>:
+                        </label>
+                        <textarea 
+                            id="photoOverrideModalNote" 
+                            placeholder="Enter a note explaining why the photo requirement is being overridden to Ready (required)"
+                            required
+                            style="width: 100%; min-height: 120px; padding: 0.75rem; background: var(--app-bg-panel-input); border: 1px solid var(--app-border-soft); color: var(--app-text-primary); border-radius: 0.375rem; font-size: 0.875rem; font-family: inherit; resize: vertical;"
+                            onkeydown="if(event.key === 'Enter' && event.ctrlKey) { submitPhotoOverride(); }"
+                        ></textarea>
+                        <div style="margin-top: 0.25rem; font-size: 0.75rem; color: var(--app-text-secondary);">
+                            Press Ctrl+Enter to submit
+                        </div>
+                    </div>
+                    <div class="modal-actions" style="display: flex; gap: 0.5rem; justify-content: flex-end; margin-top: 1.5rem;">
+                        <button class="button" onclick="closePhotoOverrideModal()" style="background: var(--app-bg-muted); color: var(--app-text-primary);">
+                            Cancel
+                        </button>
+                        <button class="button" onclick="submitPhotoOverride()" style="background: var(--app-success); color: var(--app-text-inverse);">
+                            Override to Ready
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Workflow acknowledgement modal -->
+        <div id="workflowAckModal" class="modal-overlay" style="display: none; z-index: 62000;" onclick="workflowAckModule.closeWorkflowAckModal()">
+            <div class="modal-content" onclick="event.stopPropagation()" style="max-width: 500px;">
+                <div class="modal-header">
+                    <h2 class="modal-title">Mark ticket ready</h2>
+                    <button type="button" class="modal-close" onclick="workflowAckModule.closeWorkflowAckModal()">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div id="workflowAckStatusBadge" class="workflow-ack-status-badge-host" aria-live="polite"></div>
+                    <p style="color: var(--app-text-secondary); font-size: 0.875rem; margin: 0 0 1rem;">
+                        Confirm you have reviewed utility responses and photos for this revision.
+                    </p>
+                    <div id="workflowAckChecklist" style="margin-bottom: 1rem; font-size: 0.875rem;"></div>
+                    <div style="margin-bottom: 1rem;">
+                        <label for="workflowAckPassword" style="display: block; margin-bottom: 0.5rem; font-weight: 500;">
+                            Your account password <span style="color: var(--app-danger);">*</span>
+                        </label>
+                        <input
+                            type="password"
+                            id="workflowAckPassword"
+                            autocomplete="off"
+                            disabled
+                            data-lpignore="true"
+                            data-1p-ignore="true"
+                            data-bwignore="true"
+                            data-form-type="other"
+                            style="width: 100%; padding: 0.75rem; background: var(--app-bg-panel-input); border: 1px solid var(--app-border-soft); color: var(--app-text-primary); border-radius: 0.375rem;"
+                        />
+                    </div>
+                    <div style="margin-bottom: 1rem;">
+                        <label for="workflowAckNote" style="display: block; margin-bottom: 0.5rem; font-weight: 500;">
+                            Note (optional)
+                        </label>
+                        <textarea
+                            id="workflowAckNote"
+                            style="width: 100%; min-height: 80px; padding: 0.75rem; background: var(--app-bg-panel-input); border: 1px solid var(--app-border-soft); color: var(--app-text-primary); border-radius: 0.375rem; font-family: inherit; resize: vertical;"
+                        ></textarea>
+                    </div>
+                    <div class="modal-actions" style="display: flex; gap: 0.5rem; justify-content: flex-end; flex-wrap: wrap;">
+                        <button type="button" class="button" onclick="workflowAckModule.closeWorkflowAckModal()" style="background: var(--app-bg-muted); color: var(--app-text-primary);">
+                            Cancel
+                        </button>
+                        <button type="button" id="workflowAckRevertBtn" class="button" style="display: none; background: var(--app-danger); color: var(--app-text-inverse);">
+                            Un-ack
+                        </button>
+                        <button type="button" id="workflowAckSubmitBtn" class="button" style="background: var(--app-success); color: var(--app-text-inverse);">
+                            Acknowledge
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Ticket assignees (legacy modal shell; project assignees reuse this pattern below) -->
+        <div id="ticketAssigneesModal" class="modal-overlay" style="display: none; z-index: 61000;" onclick="closeTicketAssigneesModal()">
+            <div class="modal-content" onclick="event.stopPropagation()" style="max-width: 420px;">
+                <div class="modal-header">
+                    <h2 class="modal-title">People assigned</h2>
+                    <button type="button" class="modal-close" onclick="closeTicketAssigneesModal()" aria-label="Close">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <p id="ticketAssigneesModalTicketRef" style="color: var(--app-text-secondary); font-size: 0.875rem; margin: 0 0 1rem;"></p>
+                    <div id="ticketAssigneesModalReadOnly" style="display: none;">
+                        <div style="font-size: 0.8rem; color: var(--app-text-muted); margin-bottom: 0.35rem;">Currently assigned</div>
+                        <div id="ticketAssigneesModalList" class="ticket-assignees-checklist ticket-assignees-readonly"></div>
+                    </div>
+                    <div id="ticketAssigneesModalEditor" style="display: none;">
+                        <div style="margin-bottom: 0.5rem; color: var(--app-text-secondary); font-size: 0.875rem;">Assign to people</div>
+                        <div id="ticketAssigneesModalChecklist" class="ticket-assignees-checklist" role="group" aria-label="Assign to people"></div>
+                        <p style="font-size: 0.75rem; color: var(--app-text-muted); margin: 0.5rem 0 0;">Check or uncheck names, then click Save to apply.</p>
+                        <div class="modal-actions" style="display: flex; gap: 0.5rem; justify-content: flex-end; margin-top: 1rem;">
+                            <button type="button" id="ticketAssigneesModalCancelBtn" class="button" onclick="closeTicketAssigneesModal()" style="background: var(--app-bg-muted); color: var(--app-text-primary);">
+                                Cancel
+                            </button>
+                            <button type="button" id="ticketAssigneesModalSaveBtn" class="button" onclick="void submitTicketAssigneesModalSave()" disabled style="background: var(--app-accent); color: var(--app-button-primary-text, var(--app-text-inverse));">
+                                Save
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Project assignees: count button on project detail opens this modal -->
+        <div id="projectAssigneesModal" class="modal-overlay" style="display: none; z-index: 61000;" onclick="closeProjectAssigneesModal()">
+            <div class="modal-content" onclick="event.stopPropagation()" style="max-width: 420px;">
+                <div class="modal-header">
+                    <h2 class="modal-title">People assigned</h2>
+                    <button type="button" class="modal-close" onclick="closeProjectAssigneesModal()" aria-label="Close">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <p id="projectAssigneesModalProjectRef" style="color: var(--app-text-secondary); font-size: 0.875rem; margin: 0 0 1rem;"></p>
+                    <div id="projectAssigneesModalReadOnly" style="display: none;">
+                        <div style="font-size: 0.8rem; color: var(--app-text-muted); margin-bottom: 0.35rem;">Currently assigned</div>
+                        <div id="projectAssigneesModalList" class="ticket-assignees-checklist ticket-assignees-readonly"></div>
+                    </div>
+                    <div id="projectAssigneesModalEditor" style="display: none;">
+                        <div style="margin-bottom: 0.5rem; color: var(--app-text-secondary); font-size: 0.875rem;">Assign to people</div>
+                        <input
+                            type="search"
+                            id="projectAssigneesModalSearch"
+                            class="ticket-assignees-search-input"
+                            placeholder="Search by name…"
+                            autocomplete="off"
+                            autocorrect="off"
+                            spellcheck="false"
+                            aria-label="Search people"
+                        />
+                        <div id="projectAssigneesModalChecklist" class="ticket-assignees-checklist" role="group" aria-label="Assign to people"></div>
+                        <div id="projectAssigneesModalPagination" class="ticket-assignees-pagination" hidden></div>
+                        <p style="font-size: 0.75rem; color: var(--app-text-muted); margin: 0.5rem 0 0;">People assigned here can see this project&apos;s tickets in Ticket Hub and on the map. Check or uncheck names, then click Save.</p>
+                        <div class="modal-actions" style="display: flex; gap: 0.5rem; justify-content: flex-end; margin-top: 1rem;">
+                            <button type="button" id="projectAssigneesModalCancelBtn" class="button" onclick="closeProjectAssigneesModal()" style="background: var(--app-bg-muted); color: var(--app-text-primary);">
+                                Cancel
+                            </button>
+                            <button type="button" id="projectAssigneesModalSaveBtn" class="button" onclick="void submitProjectAssigneesModalSave()" disabled style="background: var(--app-accent); color: var(--app-button-primary-text, var(--app-text-inverse));">
+                                Save
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Ticket projects: field in popup opens this modal to view or change membership -->
+        <div id="ticketProjectsModal" class="modal-overlay" style="display: none; z-index: 61000;" onclick="closeTicketProjectsModal()">
+            <div class="modal-content" onclick="event.stopPropagation()" style="max-width: 420px;">
+                <div class="modal-header">
+                    <h2 class="modal-title">Projects</h2>
+                    <button type="button" class="modal-close" onclick="closeTicketProjectsModal()" aria-label="Close">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <p id="ticketProjectsModalTicketRef" style="color: var(--app-text-secondary); font-size: 0.875rem; margin: 0 0 1rem;"></p>
+                    <div id="ticketProjectsModalReadOnly" style="display: none;">
+                        <div style="font-size: 0.8rem; color: var(--app-text-muted); margin-bottom: 0.35rem;">Current projects</div>
+                        <div id="ticketProjectsModalList" class="ticket-assignees-checklist ticket-assignees-readonly"></div>
+                    </div>
+                    <div id="ticketProjectsModalEditor" style="display: none;">
+                        <div style="margin-bottom: 0.5rem; color: var(--app-text-secondary); font-size: 0.875rem;">Assign to projects</div>
+                        <div id="ticketProjectsModalChecklist" class="ticket-assignees-checklist" role="group" aria-label="Assign to projects"></div>
+                        <p style="font-size: 0.75rem; color: var(--app-text-muted); margin: 0.5rem 0 0;">Check or uncheck projects, then click Save to apply. Removing a project also detaches this ticket from that project&apos;s shared compliance.</p>
+                        <button type="button" id="ticketProjectsModalCreateBtn" class="ticket-hub-action-btn" style="margin-top: 0.75rem;">Create new project…</button>
+                        <div class="modal-actions" style="display: flex; gap: 0.5rem; justify-content: flex-end; margin-top: 1rem;">
+                            <button type="button" id="ticketProjectsModalCancelBtn" class="button" onclick="closeTicketProjectsModal()" style="background: var(--app-bg-muted); color: var(--app-text-primary);">
+                                Cancel
+                            </button>
+                            <button type="button" id="ticketProjectsModalSaveBtn" class="button" onclick="void submitTicketProjectsModalSave()" disabled style="background: var(--app-accent); color: var(--app-button-primary-text, var(--app-text-inverse));">
+                                Save
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Event Details Modal -->
+        <div id="eventDetailsModal" class="modal-overlay" style="display: none; z-index: 70000;">
+            <div class="modal-content" onclick="event.stopPropagation()" style="max-width: 700px; max-height: 90vh; overflow-y: auto;">
+                <div class="modal-header">
+                    <h2 class="modal-title">DIRT Event Report Details</h2>
+                    <button class="modal-close" onclick="closeEventDetailsModal()">&times;</button>
+                </div>
+                <div class="modal-body" id="eventDetailsContent">
+                    <!-- Content will be populated by JavaScript -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Service Request Modal -->
+        <div id="serviceRequestModal" class="modal-overlay" style="display: none; z-index: 70000;" onclick="if (event.target === this) closeServiceRequestModal()">
+            <div class="modal-content" onclick="event.stopPropagation()" style="max-width: 600px;">
+                <div class="modal-header">
+                    <h2 class="modal-title">Request Services</h2>
+                    <button class="modal-close" onclick="closeServiceRequestModal()">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <form id="serviceRequestForm" onsubmit="submitServiceRequest(event)">
+                        <p id="serviceRequestContext" class="form-label" style="margin-bottom: 1rem; color: var(--app-text-secondary);"></p>
+                        <div class="form-group" style="margin-bottom: 1rem;">
+                            <span class="form-label">Services <span style="color: var(--app-danger);">*</span></span>
+                            <p style="margin: 0.25rem 0 0.75rem; font-size: 0.875rem; color: var(--app-text-secondary);">Select one or more services.</p>
+                            <label style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem; cursor: pointer;">
+                                <input type="checkbox" id="serviceTypeSiteDocumentation" value="site_documentation">
+                                <span>Site documentation</span>
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                                <input type="checkbox" id="serviceTypePrivateLocating" value="private_locating">
+                                <span>Private locating</span>
+                            </label>
+                        </div>
+                        <div class="form-group" style="margin-bottom: 1rem;">
+                            <label for="serviceNote" class="form-label">Notes</label>
+                            <textarea id="serviceNote" class="form-input" rows="6" placeholder="Optional details about your service request..."></textarea>
+                        </div>
+                        <div class="modal-actions" style="display: flex; gap: 0.5rem; justify-content: flex-end; margin-top: 1.5rem;">
+                            <button type="button" class="button" onclick="closeServiceRequestModal()" style="background: var(--app-bg-muted); color: var(--app-text-primary);">
+                                Cancel
+                            </button>
+                            <button type="submit" class="button" style="background: var(--app-accent); color: var(--app-button-primary-text, var(--app-text-inverse));">
+                                Submit Request
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Document Viewer Modal -->
+        <div id="documentViewerModal" class="modal-overlay" style="display: none; z-index: 70000;">
+            <div class="modal-content" onclick="event.stopPropagation()" style="max-width: 90vw; max-height: 90vh; width: 90vw; height: 90vh; display: flex; flex-direction: column;">
+                <div class="modal-header" style="flex-shrink: 0; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.5rem;">
+                    <h2 class="modal-title" id="documentViewerTitle" style="margin: 0;">Document Viewer</h2>
+                    <div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
+                        <!-- View / Annotate toggle -->
+                        <div id="documentViewerModeToolbar" style="display: flex; gap: 0.25rem;">
+                            <button type="button" id="documentViewModeBtn" onclick="setDocumentViewerMode('view')" style="background: var(--app-accent); color: var(--app-button-primary-text, var(--app-text-inverse)); padding: 0.5rem 1rem; border: none; border-radius: 0.25rem; cursor: pointer; font-size: 0.875rem;">View</button>
+                            <button type="button" id="documentAnnotateModeBtn" onclick="setDocumentViewerMode('annotate')" style="background: var(--app-bg-tool); color: var(--app-text-inverse); padding: 0.5rem 1rem; border: none; border-radius: 0.25rem; cursor: pointer; font-size: 0.875rem;">Annotate</button>
+                        </div>
+                        <!-- Annotate tools (visible in annotate mode) -->
+                        <div id="documentAnnotateTools" style="display: none; gap: 0.25rem; align-items: center;">
+                            <button type="button" id="pdfToolHighlight" onclick="window.pdfEditorModule && window.pdfEditorModule.setTool('highlight')" title="Highlight" style="background: var(--app-bg-tool); color: var(--app-text-inverse); padding: 0.4rem 0.75rem; border: none; border-radius: 0.25rem; cursor: pointer; font-size: 0.8rem;">Highlight</button>
+                            <button type="button" id="pdfToolNote" onclick="window.pdfEditorModule && window.pdfEditorModule.setTool('note')" title="Sticky note" style="background: var(--app-bg-tool); color: var(--app-text-inverse); padding: 0.4rem 0.75rem; border: none; border-radius: 0.25rem; cursor: pointer; font-size: 0.8rem;">Note</button>
+                            <button type="button" id="pdfToolEraser" onclick="window.pdfEditorModule && window.pdfEditorModule.setTool('eraser')" title="Delete annotation" style="background: var(--app-bg-tool); color: var(--app-text-inverse); padding: 0.4rem 0.75rem; border: none; border-radius: 0.25rem; cursor: pointer; font-size: 0.8rem;">Eraser</button>
+                        </div>
+                        <!-- Zoom -->
+                        <div style="display: flex; gap: 0.25rem;">
+                            <button type="button" onclick="window.pdfEditorModule && window.pdfEditorModule.setScale((window._pdfEditorScale || 1.2) - 0.2)" style="background: var(--app-bg-tool); color: var(--app-text-inverse); padding: 0.4rem 0.6rem; border: none; border-radius: 0.25rem; cursor: pointer; font-size: 0.875rem;">−</button>
+                            <button type="button" onclick="window.pdfEditorModule && window.pdfEditorModule.setScale((window._pdfEditorScale || 1.2) + 0.2)" style="background: var(--app-bg-tool); color: var(--app-text-inverse); padding: 0.4rem 0.6rem; border: none; border-radius: 0.25rem; cursor: pointer; font-size: 0.875rem;">+</button>
+                        </div>
+                        <button type="button" id="documentFullscreenBtn" class="button" onclick="toggleDocumentFullscreen()" style="background: var(--app-accent); color: var(--app-button-primary-text, var(--app-text-inverse)); padding: 0.5rem 1rem; border: none; border-radius: 0.25rem; cursor: pointer; font-size: 0.875rem;">Fullscreen</button>
+                        <button class="modal-close" onclick="closeDocumentViewer()">&times;</button>
+                    </div>
+                </div>
+                <div class="modal-body" style="flex: 1; overflow: hidden; padding: 0; position: relative; display: flex; flex-direction: column;">
+                    <div id="documentViewerContent" style="flex: 1; overflow: hidden; position: relative;">
+                        <iframe id="documentViewerIframe" style="width: 100%; height: 100%; border: none;"></iframe>
+                    </div>
+                    <div id="documentEditorContent" style="display: none; flex: 1; overflow: auto; position: relative;"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Document note popup (used when adding a note in document viewer) -->
+        <div id="documentNoteModal" class="modal-overlay" style="display: none; z-index: 80000;">
+            <div class="modal-content" onclick="event.stopPropagation()" style="max-width: 420px;">
+                <div class="modal-header">
+                    <h2 class="modal-title">Add Note</h2>
+                    <button type="button" class="modal-close" id="documentNoteModalClose">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <label style="display: block; margin-bottom: 0.5rem; color: var(--app-text-primary); font-weight: 500;">Note text</label>
+                    <textarea id="documentNoteInput" placeholder="Enter your note..." rows="4"
+                        style="width: 100%; padding: 0.75rem; background: var(--app-bg-panel-input); border: 1px solid var(--app-border-soft); color: var(--app-text-primary); border-radius: 0.375rem; font-size: 0.875rem; font-family: inherit; resize: vertical; box-sizing: border-box;"></textarea>
+                    <div style="display: flex; gap: 0.5rem; justify-content: flex-end; margin-top: 1rem;">
+                        <button type="button" class="button" id="documentNoteCancel" style="background: var(--app-bg-muted); color: var(--app-text-primary);">Cancel</button>
+                        <button type="button" class="button" id="documentNoteSubmit" style="background: var(--app-success); color: var(--app-text-inverse);">Add Note</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Ticket Details Popup -->
+        <div id="ticketPopup" class="ticket-popup">
+            <button
+                type="button"
+                class="ticket-popup-mobile-height-grab mobile-only"
+                id="ticketPopupMobileHeightGrab"
+                aria-label="Expand ticket panel"
+                hidden
+            >
+                <span class="ticket-popup-mobile-height-grab-bar" aria-hidden="true"></span>
+                <span class="ticket-popup-mobile-height-grab-chevron" aria-hidden="true">▲</span>
+            </button>
+            <div class="ticket-popup-resize-handle" id="ticketPopupResizeHandle"></div>
+            <div class="ticket-popup-resize-handle-vertical" id="ticketPopupResizeHandleVertical"></div>
+            <div class="ticket-popup-header">
+                <div class="ticket-popup-title-row">
+                    <div class="ticket-popup-title-stack">
+                        <h3 id="ticketPopupTitle" class="ticket-popup-title"></h3>
+                        <p id="ticketPopupSubtitle" class="ticket-popup-subtitle" hidden></p>
+                    </div>
+                    <span id="ticketPopupTitleUpdating" class="ticket-popup-title-updating" hidden aria-hidden="true">
+                        <span class="ticket-popup-title-updating-spinner" role="status" aria-label="Updating ticket"></span>
+                    </span>
+                </div>
+                <div class="ticket-popup-actions">
+                    <button type="button" class="data-window-button ticket-popup-close" onclick="closeTicketPopup()" title="Close" aria-label="Close ticket details">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                            <line x1="18" y1="6" x2="6" y2="18"></line>
+                            <line x1="6" y1="6" x2="18" y2="18"></line>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+            <div id="ticketPopupContent" class="ticket-popup-content"></div>
+        </div>
+        
+        <!-- Map Container -->
+        <div class="map-container">
+            <div id="map"></div>
+            <div id="mapTopLeftControls" class="map-top-left-controls">
+                <div class="map-top-left-toolbar">
+                    <div id="mapTopLeftControlsExpanded" class="map-top-left-controls-expanded">
+                    <button type="button" id="orgMenuButton" class="org-menu-trigger" hidden aria-hidden="true" tabindex="-1" aria-haspopup="menu" aria-expanded="false" aria-controls="orgCircleMenu" title="Organization">
+                        <span id="orgMenuButtonLabel" class="org-menu-trigger-label">Organization</span>
+                        <span class="org-menu-trigger-chevron" aria-hidden="true">▾</span>
+                    </button>
+                    <button type="button" id="ticketHubOpenButton" class="map-top-left-hub-btn ticket-list-header-button ticket-list-header-button--ticket-hub" onclick="toggleTicketHubWindow()" title="Ticket Hub: search, filter, stats, and detailed ticket view" aria-label="Ticket Hub">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"></path>
+                            <path d="M13 5v2"></path>
+                            <path d="M13 11v2"></path>
+                            <path d="M13 17v2"></path>
+                        </svg>
+                    </button>
+                    <span class="data-hub-open-button-wrap core-hidden">
+                        <button type="button" id="dataHubOpenButton" class="map-top-left-hub-btn map-top-left-data-hub-btn map-data-open-trigger ticket-list-header-button ticket-list-header-button--data-hub" onclick="if (window.openDataWindow) window.openDataWindow()" title="Data Hub: annotations, layers, photos, documents, and events" aria-label="Data Hub">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                <ellipse cx="12" cy="5" rx="9" ry="3"></ellipse>
+                                <path d="M3 5V19A9 3 0 0 0 21 19V5"></path>
+                                <path d="M3 12A9 3 0 0 0 21 12"></path>
+                            </svg>
+                        </button>
+                        <span id="dataHubOpenButtonBadge" class="data-hub-open-button-badge" hidden aria-hidden="true"></span>
+                    </span>
+                    <span class="profile-menu-button-wrap">
+                        <button type="button" class="map-top-left-profile-btn profile-menu-button" id="profileMenuButton" aria-label="Open menu" aria-haspopup="menu" aria-controls="accountCircleMenu" aria-expanded="false">☰</button>
+                        <span id="profileMenuButtonBadge" class="profile-menu-button-badge profile-menu-button-badge--general" hidden aria-hidden="true"></span>
+                        <span id="profileMenuButtonSrBadge" class="profile-menu-button-badge profile-menu-button-badge--sr" hidden aria-hidden="true"></span>
+                    </span>
+                </div>
+                    <button
+                        type="button"
+                        id="mapTopLeftActiveStatBubble"
+                        class="map-top-left-active-stat-bubble mobile-only"
+                        hidden
+                        title="Tickets — tap to open, press and hold for filters"
+                        aria-label="Tickets — tap to open, press and hold for filters"
+                        aria-controls="mapTopLeftStatFilterMenu"
+                        aria-expanded="false"
+                    >
+                        <span class="map-top-left-active-stat-label">Tickets</span>
+                        <span class="map-top-left-active-stat-value">0</span>
+                    </button>
+                    <button
+                        type="button"
+                        id="mapTopLeftDataHubFilterBubble"
+                        class="map-top-left-data-hub-filter-bubble mobile-only"
+                        hidden
+                        title="Data Hub — map filter active"
+                        aria-label="Data Hub — map filter active. Tap to open."
+                    >
+                        <span class="map-top-left-data-hub-filter-bubble-icon" aria-hidden="true">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <ellipse cx="12" cy="5" rx="9" ry="3"></ellipse>
+                                <path d="M3 5V19A9 3 0 0 0 21 19V5"></path>
+                                <path d="M3 12A9 3 0 0 0 21 12"></path>
+                            </svg>
+                        </span>
+                    </button>
+                    <div
+                        id="mapTopLeftStatFilterMenu"
+                        class="map-top-left-stat-filter-menu mobile-only"
+                        hidden
+                        aria-hidden="true"
+                        role="group"
+                        aria-label="Ticket status filters"
+                    >
+                        <button
+                            type="button"
+                            id="mapTopLeftStatFilterClose"
+                            class="map-top-left-stat-filter-close"
+                            title="Close filters"
+                            aria-label="Close filters"
+                        >
+                            ×
+                        </button>
+                        <div
+                            id="mapTopLeftStatFilterCards"
+                            class="map-top-left-stat-filter-cards ticket-hub-stats"
+                        ></div>
+                    </div>
+                    <button type="button" id="mapTopLeftMenuFab" class="map-top-left-menu-fab mobile-only" aria-label="Open map menu" aria-expanded="false" aria-controls="mapTopLeftMenuBubbles" hidden>☰</button>
+                </div>
+                <select id="orgSelector" class="org-selector" hidden aria-hidden="true" tabindex="-1">
+                    <option value="">Loading...</option>
+                </select>
+                <div id="mapTopLeftMenuBubbles" class="map-top-left-menu-bubbles mobile-only" aria-hidden="true"></div>
+                <div id="mapTopLeftMenuBackdrop" class="map-top-left-menu-backdrop" aria-hidden="true"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Data Window -->
+    <div id="dataWindow" class="data-window">
+        <div class="data-window-resize-handle data-window-resize-top" id="dataWindowResizeHandleTop" title="Drag to resize height"></div>
+        <div class="data-window-resize-handle data-window-resize-handle-right"></div>
+        <div class="data-window-resize-handle data-window-resize-handle-bottom"></div>
+        <div class="data-window-resize-handle data-window-resize-handle-corner"></div>
+        <div class="data-window-header">
+            <h2 class="data-window-title">Data Hub</h2>
+            <div class="data-window-actions">
+                <button type="button" class="data-window-button" id="dataHubRefreshButton" onclick="void refreshDataWindow()" title="Refresh" aria-label="Refresh Data Hub">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"></path>
+                        <path d="M21 3v5h-5"></path>
+                        <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"></path>
+                        <path d="M3 21v-5h5"></path>
+                    </svg>
+                </button>
+                <button class="data-window-button" onclick="closeDataWindow()" title="Close">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
+        </div>
+        <div class="data-window-body">
+            <!-- Desktop: Tab Buttons -->
+            <div class="data-window-tabs desktop-only">
+                <button id="dataViewAnnotations" class="data-tab-button active" onclick="switchDataView('annotations')" aria-selected="true">
+                    Annotations
+                </button>
+                <button id="dataViewLayers" class="data-tab-button" onclick="switchDataView('layers')" aria-selected="false">
+                    Data Layers
+                </button>
+                <button id="dataViewPhotos" class="data-tab-button" onclick="switchDataView('photos')" aria-selected="false">
+                    Photos
+                </button>
+                <button id="dataViewDocuments" class="data-tab-button" onclick="switchDataView('documents')" aria-selected="false">
+                    Uploaded Documents
+                </button>
+                <button id="dataViewAerialMaps" class="data-tab-button" onclick="switchDataView('aerialmaps')" aria-selected="false">
+                    Aerial Maps
+                </button>
+                <button id="dataViewEvents" class="data-tab-button" onclick="switchDataView('events')" aria-selected="false" aria-label="Reported Events">
+                    Reported Events
+                    <span id="dataViewEventsBadge" class="data-tab-draft-badge" hidden aria-hidden="true"></span>
+                </button>
+            </div>
+            <!-- Mobile: Dropdown Menu -->
+            <div class="data-window-tabs-mobile mobile-only">
+                <select id="dataViewDropdown" class="data-view-dropdown" onchange="switchDataView(this.value)">
+                    <option value="annotations">Annotations</option>
+                    <option value="layers">Data Layers</option>
+                    <option value="photos">Photos</option>
+                    <option value="documents">Uploaded Documents</option>
+                    <option value="aerialmaps">Aerial Maps</option>
+                    <option value="events">Reported Events</option>
+                </select>
+            </div>
+            <div class="data-window-toolbar">
+                <div class="data-search-container">
+                    <div class="data-search-inline desktop-only">
+                        <input type="search" id="dataSearchInput" class="data-search-input" placeholder="Search data..." autocomplete="off" autocorrect="off" spellcheck="false" inputmode="search" enterkeyhint="search" oninput="filterDataTable()">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="data-search-icon">
+                            <circle cx="11" cy="11" r="8"></circle>
+                            <path d="m21 21-4.35-4.35"></path>
+                        </svg>
+                    </div>
+                    <button type="button" id="dataSearchMobileOpenBtn" class="data-search-mobile-open mobile-only" onclick="event.stopPropagation(); openDataSearchModal();" aria-label="Search and filter data" title="Search &amp; filter">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                            <circle cx="11" cy="11" r="8"></circle>
+                            <path d="m21 21-4.35-4.35"></path>
+                        </svg>
+                    </button>
+                </div>
+                <button type="button" id="dataHubFiltersButton" class="data-hub-filters-button desktop-only" style="display: none;" aria-label="Filters" title="Filters">Filters</button>
+                <button type="button" id="photosBatchesButton" class="data-hub-filters-button" style="display: none;" aria-label="Batches" title="Photo batches">Batches</button>
+                <select id="dataHubSortSelect" class="data-hub-sort-select desktop-only" style="display: none;" aria-label="Sort list">
+                    <option value="created:desc">Newest first</option>
+                    <option value="created:asc">Oldest first</option>
+                    <option value="name:asc">Name (A–Z)</option>
+                    <option value="name:desc">Name (Z–A)</option>
+                    <option value="size:asc" data-sort-for-views="documents">Size (smallest first)</option>
+                    <option value="size:desc" data-sort-for-views="documents">Size (largest first)</option>
+                </select>
+                <div class="data-bulk-actions" id="dataBulkActions" style="display: none; gap: 0.5rem; align-items: center;">
+                    <button id="loadSelectedLayersButton" class="data-bulk-button" onclick="bulkLoadSelectedLayers()" style="display: none;" title="Load selected data layers onto the map">
+                        Load Selected
+                    </button>
+                    <button id="bulkMakePublicButton" class="data-bulk-button" onclick="bulkMakeSelectedPublic()" style="display: none;" title="Make selected items public">
+                        Make Public
+                    </button>
+                    <button id="bulkMakePrivateButton" class="data-bulk-button" onclick="bulkMakeSelectedPrivate()" style="display: none;" title="Make selected items private">
+                        Make Private
+                    </button>
+                    <button id="groupSelectedButton" class="data-bulk-button" onclick="createGroupFromSelection()" style="padding: 0.5rem 1rem; background: var(--app-success); color: var(--app-text-inverse); border: none; border-radius: 0.25rem; cursor: pointer; font-size: 0.875rem; transition: background-color 0.2s; display: none;" title="Group selected items">
+                        Group
+                    </button>
+                    <button id="savePhotoBatchButton" class="data-bulk-button" onclick="savePhotoSelectionAsBatch()" style="padding: 0.5rem 1rem; background: var(--app-success); color: var(--app-text-inverse); border: none; border-radius: 0.25rem; cursor: pointer; font-size: 0.875rem; transition: background-color 0.2s; display: none;" title="Save selected photos as a named batch">
+                        Save as batch
+                    </button>
+                    <button id="bulkAssociatePhotosButton" class="data-bulk-button" onclick="bulkAssociateSelectedPhotos()" style="padding: 0.5rem 1rem; background: var(--app-accent); color: var(--app-button-primary-text, var(--app-text-inverse)); border: none; border-radius: 0.25rem; cursor: pointer; font-size: 0.875rem; transition: background-color 0.2s; display: none;" title="Associate selected photos without GPS to a ticket">
+                        Associate to ticket
+                    </button>
+                    <button type="button" id="dataBulkClearBtn" class="data-bulk-button" onclick="clearDataHubSelection()" title="Clear checkboxes only">
+                        Clear selection
+                    </button>
+                    <button class="data-bulk-button" onclick="bulkDeleteSelected()" style="padding: 0.5rem 1rem; background: var(--app-danger); color: var(--app-text-inverse); border: none; border-radius: 0.25rem; cursor: pointer; font-size: 0.875rem; transition: background-color 0.2s;">
+                        Delete Selected
+                    </button>
+                    <button id="exportSelectedButton" class="data-bulk-button" onclick="bulkExportSelected()" style="padding: 0.5rem 1rem; background: var(--app-accent); color: var(--app-button-primary-text, var(--app-text-inverse)); border: none; border-radius: 0.25rem; cursor: pointer; font-size: 0.875rem; transition: background-color 0.2s;">
+                        Export Selected
+                    </button>
+                </div>
+            </div>
+            <div id="dataAerialBboxToolbar" class="data-aerial-bbox-toolbar" style="display: none; flex-wrap: wrap; gap: 0.5rem; align-items: center; margin: 0 0 0.75rem; padding: 0 0.25rem;">
+                <span id="dataAerialBboxStatus" class="data-aerial-bbox-status" style="font-size: 0.85rem; color: var(--app-text-secondary); flex: 1 1 12rem;">Draw a search rectangle on the map (max 5×5 miles).</span>
+                <button type="button" id="dataAerialBboxDrawBtn" class="data-bulk-button" style="padding: 0.5rem 1rem; background: var(--app-accent); color: var(--app-button-primary-text, var(--app-text-inverse)); border: none; border-radius: 0.25rem; cursor: pointer; font-size: 0.875rem;" onclick="startDataHubAerialBboxDraw()">Draw search area</button>
+                <button type="button" id="dataAerialBboxClearBtn" class="data-bulk-button" style="display: none; padding: 0.5rem 1rem; background: var(--app-bg-surface); color: var(--app-text-primary); border: 1px solid var(--app-border); border-radius: 0.25rem; cursor: pointer; font-size: 0.875rem;" onclick="clearDataHubAerialSearchArea()">Clear area</button>
+            </div>
+            <div id="dataFilterContextBanner" class="data-filter-context-banner" style="display: none;" role="status">
+                <span id="dataFilterContextText" class="data-filter-context-text"></span>
+                <button type="button" id="dataFilterContextClear" class="data-filter-context-clear" onclick="clearDataFilterContext()">Clear filter</button>
+            </div>
+            <div id="dataWindowSortMobile" class="data-window-sort-mobile" aria-label="Sort list" style="display: none;">
+                <label for="dataWindowSortMobileSelect" class="data-window-sort-select-label">Sort</label>
+                <select id="dataWindowSortMobileSelect" class="data-window-sort-select" onchange="applyManageDataMobileSortFromSelect(this.value)">
+                    <option value="created:desc">Newest first</option>
+                    <option value="created:asc">Oldest first</option>
+                    <option value="name:asc">Name (A–Z)</option>
+                    <option value="name:desc">Name (Z–A)</option>
+                    <option value="size:asc" data-sort-for-views="documents">Size (smallest first)</option>
+                    <option value="size:desc" data-sort-for-views="documents">Size (largest first)</option>
+                </select>
+            </div>
+            <div class="data-table-container app-overlay-scroll">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th class="data-table-checkbox">
+                                <label class="app-checkbox app-checkbox--table">
+                                    <input type="checkbox" id="selectAllData" class="app-checkbox-input" onchange="toggleSelectAllData()" aria-label="Select all">
+                                    <span class="app-checkbox-box" aria-hidden="true"></span>
+                                </label>
+                            </th>
+                            <th class="data-table-thumb" scope="col" aria-label="Preview"></th>
+                            <th class="data-table-name" data-sortable data-column="name" onclick="handleColumnSort('name')" style="cursor: pointer; user-select: none;">
+                                Name <span class="sort-indicator" style="margin-left: 0.25rem; opacity: 0.3; font-size: 0.75rem;">↕</span>
+                            </th>
+                            <th class="data-table-type" data-sortable data-column="type" onclick="handleColumnSort('type')" style="cursor: pointer; user-select: none;">
+                                Type <span class="sort-indicator" style="margin-left: 0.25rem; opacity: 0.3; font-size: 0.75rem;">↕</span>
+                            </th>
+                            <th class="data-table-color" data-sortable data-column="color" onclick="handleColumnSort('color')" style="cursor: pointer; user-select: none;">
+                                <span id="colorHeaderText">Utility</span> <span class="sort-indicator" style="margin-left: 0.25rem; opacity: 0.3; font-size: 0.75rem;">↕</span>
+                            </th>
+                            <th class="data-table-actions">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="dataTableBody">
+                        <!-- Data rows will be inserted here -->
+                    </tbody>
+                </table>
+                <div id="dataTableEmpty" class="data-table-empty" style="display: none;">
+                    <p>No data found</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Data Hub: mobile search (icon opens popup; #dataSearchInput stays source of truth for filtering) -->
+    <div id="dataSearchModalOverlay" class="data-search-modal-overlay" aria-hidden="true" onclick="if(event.target===this) closeDataSearchModal()">
+        <div class="data-search-modal-panel data-search-filter-panel" role="dialog" aria-modal="true" aria-labelledby="dataSearchModalTitle" onclick="event.stopPropagation()">
+            <h3 id="dataSearchModalTitle" class="data-search-modal-title">Search &amp; filter</h3>
+            <input type="search" id="dataSearchInputMobile" class="data-search-modal-input" placeholder="Search data..." autocomplete="off" autocorrect="off" spellcheck="false" inputmode="search" enterkeyhint="search" oninput="onDataSearchModalInput()" />
+            <div id="dataSearchFilterBody" class="data-search-filter-body app-overlay-scroll"></div>
+            <div class="data-search-modal-actions">
+                <button type="button" class="data-search-modal-btn data-search-modal-btn-secondary" onclick="clearDataSearchModal()">Clear all</button>
+                <button type="button" class="data-search-modal-btn data-search-modal-btn-primary" onclick="closeDataSearchModal()">Done</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Data Hub: desktop filters modal (annotations, layers, photos) -->
+    <div id="dataHubFiltersModal" class="data-hub-filters-modal-overlay desktop-only" aria-hidden="true" onclick="if(event.target===this) closeDataHubFiltersModal()">
+        <div class="data-hub-filters-modal-panel" role="dialog" aria-modal="true" aria-labelledby="dataHubFiltersModalTitle" onclick="event.stopPropagation()">
+            <h3 id="dataHubFiltersModalTitle" class="data-search-modal-title">Filters</h3>
+            <div id="dataHubFiltersModalBody" class="data-hub-filters-modal-body app-overlay-scroll"></div>
+            <div class="data-search-modal-actions">
+                <button type="button" class="data-search-modal-btn data-search-modal-btn-secondary" onclick="clearDataHubFilters()">Clear</button>
+                <button type="button" class="data-search-modal-btn data-search-modal-btn-secondary" onclick="closeDataHubFiltersModal()">Cancel</button>
+                <button type="button" class="data-search-modal-btn data-search-modal-btn-primary" onclick="applyDataHubFilters()">Apply</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Data Hub: mobile row details (Type / dates / etc.) -->
+    <div id="manageDataRowInfoOverlay" class="manage-data-row-info-overlay" aria-hidden="true" onclick="if(event.target===this) closeManageDataRowInfo()">
+        <div class="manage-data-row-info-panel" role="dialog" aria-modal="true" aria-labelledby="manageDataRowInfoTitle" onclick="event.stopPropagation()">
+            <h3 id="manageDataRowInfoTitle" class="manage-data-row-info-title">Details</h3>
+            <dl id="manageDataRowInfoBody" class="manage-data-row-info-dl"></dl>
+            <div class="manage-data-row-info-footer">
+                <button type="button" class="data-search-modal-btn data-search-modal-btn-primary" onclick="closeManageDataRowInfo()">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Ticket Hub window (comprehensive ticket search, filters, stats) -->
+    <div id="ticketHubWindow" class="ticket-hub-window ticket-hub-window--dock-left show" role="dialog" aria-modal="false" aria-label="Tickets">
+        <div id="ticketHubLoadingOverlay" class="ticket-hub-loading-overlay" style="display: none;" aria-busy="false" aria-live="polite">
+            <div class="ticket-hub-loading-inner">
+                <div class="app-loading-indicator" role="status" aria-label="Loading"></div>
+                <p class="ticket-hub-loading-text">Updating ticket list…</p>
+            </div>
+        </div>
+        <button
+            type="button"
+            class="ticket-hub-mobile-height-grab mobile-only"
+            id="ticketHubMobileHeightGrab"
+            aria-label="Expand Ticket Hub height"
+            hidden
+        >
+            <span class="ticket-hub-mobile-height-grab-bar" aria-hidden="true"></span>
+            <span class="ticket-hub-mobile-height-grab-chevron" aria-hidden="true">▲</span>
+        </button>
+        <div class="ticket-hub-resize-handle ticket-hub-resize-top" id="ticketHubResizeHandleTop" title="Drag to resize height"></div>
+        <div class="ticket-hub-window-header">
+            <h2 class="ticket-hub-window-title visually-hidden" id="ticketHubWindowTitle">Tickets</h2>
+            <div class="ticket-hub-window-actions">
+                <button type="button" class="ticket-hub-filters-view-map-btn mobile-only" onclick="event.stopPropagation(); closeTicketHubWindow();" title="Close ticket list to view the map">
+                    View Map
+                </button>
+                <button
+                    type="button"
+                    id="ticketHubFiltersOpenBtn"
+                    class="ticket-hub-toolbar-action-btn ticket-hub-toolbar-action-btn--icon"
+                    onclick="event.stopPropagation(); openTicketHubFiltersModal();"
+                    aria-haspopup="dialog"
+                    aria-controls="ticketHubFiltersModal"
+                    aria-expanded="false"
+                    aria-label="Search and filter tickets"
+                    title="Search &amp; filter"
+                >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <path d="m21 21-4.35-4.35"></path>
+                    </svg>
+                </button>
+                <button type="button" class="data-window-button" id="ticketHubUsanPollRefreshBtn" onclick="reloadTicketsFromUsanList()" title="External list sync: last 7 days (extends to last sync, up to 30 days, when overdue)" aria-label="External list sync: last 7 days (extends to last sync, up to 30 days, when overdue)">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                        <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"></path>
+                        <path d="M21 3v5h-5"></path>
+                        <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"></path>
+                        <path d="M3 21v-5h5"></path>
+                    </svg>
+                </button>
+                <span class="ticket-hub-columns-anchor desktop-only">
+                    <button
+                        type="button"
+                        id="ticketHubColumnsBtn"
+                        class="ticket-hub-columns-btn"
+                        aria-haspopup="dialog"
+                        aria-controls="ticketHubColumnsPopover"
+                        aria-expanded="false"
+                        aria-label="Table columns"
+                        title="Table columns"
+                    >
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"></path>
+                            <circle cx="12" cy="12" r="3"></circle>
+                        </svg>
+                    </button>
+                </span>
+            </div>
+        </div>
+        <div id="ticketHubStats" class="ticket-hub-stats"></div>
+        <div id="ticketHubStatsSearchHost" class="ticket-hub-status-search-host" hidden></div>
+        <div id="ticketHubBulkBar" class="ticket-hub-bulk-bar" hidden>
+            <span id="ticketHubBulkBarLabel" class="ticket-hub-bulk-bar-label"></span>
+            <div class="ticket-hub-bulk-bar-actions">
+                <div class="ticket-hub-bulk-bar-group ticket-hub-bulk-bar-group--clear">
+                    <button type="button" id="ticketHubBulkClear" class="ticket-hub-bulk-btn" title="Clear checkboxes only">
+                        Clear selection
+                    </button>
+                </div>
+                <div class="ticket-hub-bulk-bar-group ticket-hub-bulk-bar-group--refresh">
+                    <button type="button" id="ticketHubBulkRefresh" class="ticket-hub-bulk-btn" title="Reload selected tickets from external services (one after another)">
+                        Update selected
+                    </button>
+                </div>
+                <div class="ticket-hub-bulk-bar-group ticket-hub-bulk-bar-group--renew-remark">
+                    <button type="button" id="ticketHubBulkRenew" class="ticket-hub-bulk-btn ticket-hub-bulk-btn-primary" hidden>
+                        Renew selected
+                    </button>
+                </div>
+                <div class="ticket-hub-bulk-bar-group ticket-hub-bulk-bar-group--delete">
+                    <button type="button" id="ticketHubBulkDelete" class="ticket-hub-bulk-btn ticket-hub-bulk-btn-danger" hidden>
+                        Delete selected
+                    </button>
+                </div>
+                <div class="ticket-hub-bulk-bar-group ticket-hub-bulk-bar-group--site-doc">
+                    <button type="button" id="ticketHubBulkSiteDoc" class="ticket-hub-bulk-btn">Request services</button>
+                </div>
+            </div>
+        </div>
+        <div class="ticket-hub-body">
+            <div id="ticketHubTicketsSection" class="ticket-hub-section ticket-hub-section--active" data-ticket-hub-section-panel="tickets">
+            <div id="ticketHubSplit" class="ticket-hub-split ticket-hub-split--no-detail">
+                <div class="ticket-hub-table-panel">
+                    <div class="ticket-hub-table-scroll app-overlay-scroll">
+                        <table class="ticket-hub-table">
+                            <thead>
+                                <tr id="ticketHubTableHeadRow"></tr>
+                            </thead>
+                            <tbody id="ticketHubTableBody"></tbody>
+                        </table>
+                        <div id="ticketHubTableEmpty" class="ticket-hub-table-empty" style="display: none;">No tickets match your filters.</div>
+                    </div>
+                    <div id="ticketHubExpiredFooter" class="ticket-hub-expired-footer" hidden></div>
+                    <div id="ticketHubExpiredPager" class="ticket-hub-expired-pager" hidden role="navigation" aria-label="Ticket list pages">
+                        <p id="ticketHubPagerRange" class="ticket-hub-pager-range"></p>
+                        <div class="ticket-hub-pages">
+                            <button type="button" id="ticketHubExpiredPrev" class="ticket-hub-page-nav" aria-label="Previous page">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                            </button>
+                            <span id="ticketHubPagerPages" class="ticket-hub-pager-pages"></span>
+                            <span id="ticketHubExpiredPageLabel" class="ticket-hub-expired-page-label">Page 1</span>
+                            <button type="button" id="ticketHubExpiredNext" class="ticket-hub-page-nav" aria-label="Next page">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div
+                    class="ticket-hub-split-resizer"
+                    id="ticketHubSplitResizer"
+                    role="separator"
+                    aria-orientation="vertical"
+                    aria-label="Resize ticket list and details"
+                    aria-valuemin="28"
+                    aria-valuemax="72"
+                    tabindex="0"
+                ></div>
+                <div id="ticketHubDetail" class="ticket-hub-detail-panel" hidden></div>
+            </div>
+            </div>
+        </div>
+        <!-- Mobile: create ticket or new project (opened from header + on small screens) -->
+        <div id="ticketHubCreateMenuModal" class="ticket-hub-detail-modal ticket-hub-create-menu-modal" aria-hidden="true">
+            <div class="ticket-hub-detail-modal-backdrop" aria-hidden="true"></div>
+            <div class="ticket-hub-detail-modal-sheet" role="dialog" aria-modal="true" aria-labelledby="ticketHubCreateMenuModalTitle">
+                <div class="ticket-hub-detail-modal-header">
+                    <h3 id="ticketHubCreateMenuModalTitle" class="ticket-hub-detail-modal-title">Create</h3>
+                    <div class="ticket-hub-detail-modal-header-actions">
+                        <button type="button" class="ticket-hub-detail-modal-close" onclick="closeTicketHubCreateMenuModal()" title="Close" aria-label="Close">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <line x1="18" y1="6" x2="6" y2="18"></line>
+                                <line x1="6" y1="6" x2="18" y2="18"></line>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+                <div class="ticket-hub-create-menu-body">
+                    <button type="button" class="ticket-hub-create-menu-item" data-ticket-hub-create-action="ticket">Create ticket</button>
+                </div>
+            </div>
+        </div>
+        <!-- Search & filters popup: list + map controls (mobile sheet, desktop map status dropdown) -->
+        <div id="ticketHubFiltersModal" class="ticket-hub-detail-modal ticket-hub-filters-modal" aria-hidden="true">
+            <div class="ticket-hub-detail-modal-backdrop" aria-hidden="true"></div>
+            <div class="ticket-hub-detail-modal-sheet" role="dialog" aria-modal="true" aria-labelledby="ticketHubFiltersModalTitle">
+                <div class="ticket-hub-detail-modal-header ticket-hub-filters-modal-header">
+                    <h3 id="ticketHubFiltersModalTitle" class="ticket-hub-detail-modal-title">Search &amp; filters</h3>
+                    <div class="ticket-hub-filters-modal-header-actions">
+                        <button type="button" class="ticket-hub-filters-view-map-btn mobile-only" onclick="viewMapFromTicketHubFilters()" title="Close filters and ticket list to view the map">
+                            View Map
+                        </button>
+                        <button type="button" class="ticket-hub-filters-reset-btn" onclick="resetTicketHubFilters()" title="Clear search, sheet filters, status to Active only, and map area">
+                            Reset filters
+                        </button>
+                        <button type="button" class="ticket-hub-detail-modal-close" onclick="closeTicketHubFiltersModal()" title="Close" aria-label="Close search and filters">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <line x1="18" y1="6" x2="6" y2="18"></line>
+                                <line x1="6" y1="6" x2="18" y2="18"></line>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+                <div id="ticketHubFiltersModalBody" class="ticket-hub-detail-modal-body ticket-hub-filters-modal-body app-overlay-scroll">
+                    <div id="ticketHubFiltersPack" class="ticket-hub-filters-pack">
+                        <div class="ticket-hub-search-wrap" id="ticketHubSearchWrap">
+                            <label class="ticket-hub-label" for="ticketHubSearch">Search</label>
+                            <input type="search" id="ticketHubSearch" class="ticket-hub-input" placeholder="Ticket #, job name, address, work description…" autocomplete="off" autocorrect="off" spellcheck="false" inputmode="search" enterkeyhint="search" oninput="onTicketHubFilterChange()" />
+                        </div>
+                        <div class="ticket-hub-field">
+                            <label class="ticket-hub-label" for="ticketHubTimeframeType">Timeframe type</label>
+                            <select id="ticketHubTimeframeType" class="ticket-hub-select" onchange="onTicketHubFilterChange()">
+                                <option value="expiration" selected>Ticket expiration</option>
+                                <option value="job_start">Job start</option>
+                                <option value="legal_start">Legal start</option>
+                            </select>
+                        </div>
+                        <div class="ticket-hub-field">
+                            <label class="ticket-hub-label" for="ticketHubTimeframe">Timeframe</label>
+                            <select id="ticketHubTimeframe" class="ticket-hub-select" onchange="onTicketHubFilterChange()">
+                                <option value="all" selected>All Active (default)</option>
+                                <option value="7d">Last 7 days</option>
+                                <option value="14d">Last 14 days</option>
+                                <option value="30d">Last 30 days</option>
+                                <option value="90d" data-hub-mobile-extended="1">Last 90 days</option>
+                                <option value="365d" data-hub-mobile-extended="1">Last 365 days</option>
+                                <option value="custom" data-hub-mobile-extended="1">Custom dates</option>
+                            </select>
+                        </div>
+                        <div id="ticketHubFiltersAdvanced" class="ticket-hub-filters-advanced">
+                            <button
+                                type="button"
+                                id="ticketHubFiltersAdvancedToggle"
+                                class="ticket-hub-filters-advanced-toggle mobile-only"
+                                aria-expanded="false"
+                                aria-controls="ticketHubFiltersAdvancedBody"
+                                hidden
+                            >
+                                Advanced filters
+                            </button>
+                            <div id="ticketHubFiltersAdvancedBody" class="ticket-hub-filters-advanced-body">
+                                <div class="ticket-hub-field">
+                                    <label class="ticket-hub-label" for="ticketHubAssigneeFilter">Assigned to</label>
+                                    <select id="ticketHubAssigneeFilter" class="ticket-hub-select" onchange="onTicketHubFilterChange()">
+                                        <option value="all">All assignees</option>
+                                        <option value="assigned">Anyone assigned</option>
+                                        <option value="unassigned">Unassigned only</option>
+                                    </select>
+                                </div>
+                                <div class="ticket-hub-field">
+                                    <label class="ticket-hub-label" for="ticketHubSubmittedByFilter" title="Original submitter — first person who lodged the ticket in nGen">Submitted by</label>
+                                    <select id="ticketHubSubmittedByFilter" class="ticket-hub-select" onchange="onTicketHubFilterChange()">
+                                        <option value="all">All submitters</option>
+                                    </select>
+                                </div>
+                                <div class="ticket-hub-field" hidden aria-hidden="true">
+                                    <label class="ticket-hub-label" for="ticketHubOrgScope">Organization</label>
+                                    <select id="ticketHubOrgScope" class="ticket-hub-select" onchange="onTicketHubFilterChange()" tabindex="-1">
+                                        <option value="all" selected>All</option>
+                                        <option value="shared_partner">Partner shared</option>
+                                        <option value="external">External</option>
+                                        <option value="active_internal">Internal</option>
+                                    </select>
+                                </div>
+                                <div class="ticket-hub-field">
+                                    <label class="ticket-hub-label" for="ticketHubTicketTypeFilter">Ticket type</label>
+                                    <select id="ticketHubTicketTypeFilter" class="ticket-hub-select" onchange="onTicketHubFilterChange()">
+                                        <option value="all" selected>All types</option>
+                                        <option value="Normal">Normal</option>
+                                        <option value="Short">Short</option>
+                                        <option value="Emergency">Emergency</option>
+                                    </select>
+                                </div>
+                                <div class="ticket-hub-field">
+                                    <label class="ticket-hub-label" for="ticketHubEnquiryStatusFilter">Ticket status</label>
+                                    <select id="ticketHubEnquiryStatusFilter" class="ticket-hub-select" onchange="onTicketHubFilterChange()">
+                                        <option value="all" selected>All statuses</option>
+                                        <option value="new">New</option>
+                                        <option value="remark">Remark</option>
+                                        <option value="renew">Renew</option>
+                                        <option value="amendment">Amendment</option>
+                                        <option value="damaged">Damaged</option>
+                                        <option value="exposed">Exposed</option>
+                                        <option value="cancelled">Cancelled</option>
+                                        <option value="other">Other</option>
+                                    </select>
+                                </div>
+                                <div id="ticketHubCustomDateFields" class="ticket-hub-date-fields" hidden>
+                                    <div class="ticket-hub-field ticket-hub-date-field">
+                                        <label class="ticket-hub-label" for="ticketHubFromDate">From</label>
+                                        <input type="date" id="ticketHubFromDate" class="ticket-hub-input" onchange="onTicketHubFilterChange()" />
+                                    </div>
+                                    <div class="ticket-hub-field ticket-hub-date-field">
+                                        <label class="ticket-hub-label" for="ticketHubToDate">To</label>
+                                        <input type="date" id="ticketHubToDate" class="ticket-hub-input" onchange="onTicketHubFilterChange()" />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="ticketHubOwnerOrgField" class="ticket-hub-field" hidden>
+                            <label class="ticket-hub-label" for="ticketHubOwnerOrgFilter">Owner org</label>
+                            <select id="ticketHubOwnerOrgFilter" class="ticket-hub-select" onchange="onTicketHubFilterChange()">
+                                <option value="all" selected>All owner orgs</option>
+                            </select>
+                        </div>
+                        <div class="ticket-hub-field">
+                            <label class="ticket-hub-label" for="ticketHubListSort">Sort list</label>
+                            <select id="ticketHubListSort" class="ticket-hub-select" onchange="onTicketHubFilterChange()">
+                                <option value="expiring_soonest" selected>Expiring soonest</option>
+                                <option value="expiring_latest">Expiring latest</option>
+                            </select>
+                        </div>
+                        <div class="ticket-hub-map-tools-row">
+                            <div class="ticket-hub-field ticket-hub-map-area-field">
+                                <span class="ticket-hub-label">Map area</span>
+                                <div class="ticket-hub-map-area-actions">
+                                    <button type="button" id="ticketHubDrawSearchArea" class="ticket-hub-tool-btn" title="Closes this window while you draw on the map. Click the green ✓ on the last point to finish. Then the hub reopens with all statuses in that area.">
+                                        Draw area
+                                    </button>
+                                    <button type="button" id="ticketHubClearSearchArea" class="ticket-hub-tool-btn ticket-hub-tool-btn-muted" disabled title="Remove map area filter">
+                                        Clear area
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Mobile: ticket details sheet (outside hub window so fixed positioning can use full viewport) -->
+    <div id="ticketHubDetailModal" class="ticket-hub-detail-modal" aria-hidden="true">
+        <div class="ticket-hub-detail-modal-backdrop" aria-hidden="true"></div>
+        <div class="ticket-hub-detail-modal-sheet" role="dialog" aria-modal="true" aria-labelledby="ticketHubDetailModalTitle">
+            <div class="ticket-hub-detail-modal-header">
+                <h3 id="ticketHubDetailModalTitle" class="ticket-hub-detail-modal-title">Ticket details</h3>
+                <div class="ticket-hub-detail-modal-header-actions">
+                    <button type="button" class="data-window-button ticket-hub-detail-modal-height-toggle mobile-only" id="ticketHubDetailMobileHeightToggle" title="Expand to full screen" aria-label="Expand to full screen" hidden>⤢</button>
+                    <button type="button" class="ticket-hub-detail-modal-close" onclick="closeTicketHubDetailModal()" title="Close" aria-label="Close details">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="18" y1="6" x2="6" y2="18"></line>
+                            <line x1="6" y1="6" x2="18" y2="18"></line>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+            <div id="ticketHubDetailModalInner" class="ticket-hub-detail-modal-body"></div>
+        </div>
+    </div>
+
+    <!-- Mobile: project details sheet (outside hub window, same pattern as ticket details) -->
+    <div id="ticketHubProjectDetailModal" class="ticket-hub-detail-modal ticket-hub-project-detail-modal" aria-hidden="true">
+        <div class="ticket-hub-detail-modal-backdrop" aria-hidden="true"></div>
+        <div class="ticket-hub-detail-modal-sheet" role="dialog" aria-modal="true" aria-labelledby="ticketHubProjectDetailModalTitle">
+            <button
+                type="button"
+                class="ticket-hub-mobile-height-grab mobile-only"
+                id="ticketHubProjectDetailMobileHeightGrab"
+                aria-label="Expand project panel"
+                hidden
+            >
+                <span class="ticket-hub-mobile-height-grab-bar" aria-hidden="true"></span>
+                <span class="ticket-hub-mobile-height-grab-chevron" aria-hidden="true">▲</span>
+            </button>
+            <div class="ticket-hub-detail-modal-header">
+                <h3 id="ticketHubProjectDetailModalTitle" class="ticket-hub-detail-modal-title">Project</h3>
+                <div class="ticket-hub-detail-modal-header-actions">
+                    <button type="button" class="ticket-hub-detail-modal-close" onclick="closeTicketHubProjectDetailModal()" title="Close" aria-label="Close project details">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="18" y1="6" x2="6" y2="18"></line>
+                            <line x1="6" y1="6" x2="18" y2="18"></line>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+            <div id="ticketHubProjectDetailModalInner" class="ticket-hub-detail-modal-body app-overlay-scroll"></div>
+        </div>
+    </div>
+
+    <!-- Map overlays on body (after hub windows) — not inside .map-container (z-index 1 stacking trap). -->
+    <div id="orgCircleMenu" class="map-circle-menu map-org-radial-menu" aria-hidden="true"></div>
+    <div id="accountCircleMenu" class="map-circle-menu" aria-hidden="true"></div>
+    <div id="mapCircleMenuBackdrop" class="map-circle-menu-backdrop" aria-hidden="true"></div>
+    <div id="mapStatusFilters" class="map-status-filters desktop-only" hidden aria-hidden="true">
+        <div id="mapStatusFiltersStats" class="ticket-hub-stats map-status-filters-stats" hidden></div>
+        <div id="mapStatusFiltersDropdown" class="map-status-dropdown app-overlay-scroll" hidden></div>
+    </div>
+
+    <script src="js/config.js"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+    <!-- Data format parsing libraries -->
+    <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+    <script src="https://unpkg.com/@mapbox/togeojson@0.16.0/togeojson.js"></script>
+    <script src="https://unpkg.com/shpjs@4.0.0/dist/shp.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mapbox/shp-write@0.4.3/shpwrite.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/proj4@2.9.0/dist/proj4.js"></script>
+    <!-- Bundled app JS (pre-PDF chunk; see frontend/build.mjs JS_BUNDLE_INDEX_PRE_PDF) -->
+    <script src="js/app-index.pre-pdf.bundle.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script>
+        if (window.pdfjsLib) {
+            // Same-origin worker: cross-origin CDN workers fail on many mobile browsers
+            // (Worker CORS / fake-worker fetch blocked by CSP connect-src).
+            window.pdfjsLib.GlobalWorkerOptions.workerSrc = '/js/vendor/pdf.worker.min.js';
+        }
+    </script>
+    <!-- Post-PDF chunk (JS_BUNDLE_INDEX_POST_PDF) -->
+    <script src="js/app-index.post-pdf.bundle.js"></script>
+</body>
+</html>

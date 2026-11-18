@@ -1,0 +1,53 @@
+# Local-only vars for `wrangler dev`.
+# Copy this file to `.dev.vars` and fill values as needed.
+
+# JWT for issued tokens in local dev
+JWT_SECRET=dev-only-change-in-production
+SUPPORT_EMAIL=support@example.com
+TRANSACTIONAL_FROM_EMAIL=noreply@your-domain.example
+
+# Explicitly mark local `wrangler dev` as non-production so localhost CORS remains available.
+APP_ENV=development
+
+# CORS for local frontend(s)
+CORS_ORIGINS=*
+
+# nGen credential mode (see src/lib/pacPollNgenCredentials.cjs):
+# - Production (APP_ENV=production): only org master `organization_pacweb_accounts` with password — USAN_SERVICE_* is ignored.
+# - Local/script (APP_ENV=development|dev|test|local): USAN_POLL_CREDENTIALS_MODE=per_organization uses master row;
+#   unset mode + USAN_SERVICE_* allows global env creds for smoke scripts only.
+USAN_POLL_CREDENTIALS_MODE=per_organization
+
+# nGen master password encryption (see ../../docs/DEPLOYMENT.md)
+NGEN_CREDENTIALS_KEY=
+# Optional: only during key rotation
+# NGEN_CREDENTIALS_KEY_OLD=
+# POST /api/internal/credential-repack-masters (also used by npm run deploy post-step)
+NGEN_CREDENTIAL_REPACK_SECRET=
+# WORKER_ORIGIN is NOT used by `wrangler dev`. It is only a local override for the post-deploy repack script.
+# - `npm run deploy`: leave both unset here. wrangler.toml CREDENTIAL_REPACK_ORIGIN (workers.dev) is used.
+# - Manual repack test against local Worker (with `npm run dev` running). An http:// value wins over workers.dev:
+# WORKER_ORIGIN=http://127.0.0.1:8787
+# CREDENTIAL_REPACK_ORIGIN=http://127.0.0.1:8787
+
+# Global USAN service login — **dev/test APP_ENV only** when USAN_POLL_CREDENTIALS_MODE is not per_organization.
+# USAN_SERVICE_USERNAME=
+# USAN_SERVICE_PASSWORD=
+
+# Optional aliases accepted by some code paths
+# NGEN_USER=
+# NGEN_PASS=
+
+# Optional list sync tuning
+# Skip redundant D1 writes on USAN list poll when upstream row unchanged (see appKv org:*:usan_list:search_fp_map)
+# NGEN_USAN_LIST_FP_CACHE=1
+# USAN_POLL_NGEN_THROTTLE_MS=0
+# NGEN_SEARCH_PAGE_LENGTH=100
+# NGEN_SEARCH_MAX_PAGES=20
+
+# Optional: first-run USAN/nGen poll window when LAST_PACWEB_POLL_AT KV is unset (see `ngenUsanPollDates.cjs`; default 120).
+# PAC_ENRICHMENT_DAYS_BACK=120
+
+# When `1`, manual import may call legacy appsnv POSR JSON (GetJobsListForTable). When `0` (production default),
+# import uses public nGen map HTML only (polygon + posrPortalDetailsOnly). Map proxy / polygon backfill always use nGen map.
+# ENABLE_POSR_STACK=0

@@ -1,0 +1,181 @@
+# Template: copy to `wrangler.toml` and replace every REPLACE_* / your-* value.
+# Do not commit real `database_id`, KV ids, or production secrets into git.
+# See ../../docs/DEPLOYMENT.md and ../../docs/PUBLIC_RELEASE.md
+
+name = "your-worker-name"
+main = "src/index.ts"
+compatibility_date = "2025-01-01"
+compatibility_flags = ["nodejs_compat"]
+
+[[workflows]]
+name = "submit-job"
+binding = "SUBMIT_JOB_WORKFLOW"
+class_name = "SubmitJobWorkflow"
+
+[observability]
+enabled = true
+head_sampling_rate = 1
+
+[[d1_databases]]
+binding = "DB"
+database_name = "locus-db"
+database_id = "REPLACE_WITH_D1_DATABASE_UUID"
+
+[[r2_buckets]]
+binding = "R2"
+bucket_name = "your-r2-bucket"
+preview_bucket_name = "your-r2-bucket"
+
+[[kv_namespaces]]
+binding = "APP_KV"
+id = "REPLACE_WITH_KV_NAMESPACE_ID"
+preview_id = "REPLACE_WITH_KV_NAMESPACE_ID"
+
+[[send_email]]
+name = "SEND_EMAIL"
+allowed_sender_addresses = ["noreply@your-domain.example"]
+
+[vars]
+APP_ENV = "production"
+SUPPORT_EMAIL = "support@example.com"
+TRANSACTIONAL_FROM_EMAIL = "noreply@your-domain.example"
+JWT_SECRET = "CHANGE_ME_NOT_FOR_PRODUCTION"
+JWT_EXPIRY = "7d"
+PASSWORD_RESET_ORIGIN = "https://your-app.example.com"
+PASSWORD_RESET_SECRET = "CHANGE_ME_PASSWORD_RESET"
+CORS_ORIGINS = "https://your-app.example.com"
+USAN_POLL_CREDENTIALS_MODE = "per_organization"
+USAN_POLL_NGEN_THROTTLE_MS = "10"
+NGEN_USAN_LIST_FP_CACHE = "1"
+USAN_LIST_INCREMENTAL_DAYS_BACK = "7"
+NGEN_SEARCH_PAGE_LENGTH = "100"
+ENABLE_POSR_STACK = "0"
+COOPERATIVE_LOCK_MS = "900000"
+TICKET_DETAIL_COOP_LOCK_MS = "120000"
+ENABLE_TICKET_RENEWAL = "0"
+GEOCODING_BIAS_BBOX = "-120.006,35.002,-114.04,42.002"
+NGEN_CREDENTIALS_KEY = "REPLACE_WITH_KEY_MATERIAL"
+NGEN_CREDENTIALS_KEY_OLD = ""
+NGEN_CREDENTIAL_REPACK_SECRET = "REPLACE_WITH_LONG_RANDOM"
+WORKER_ORIGIN = "https://your-worker.example.com"
+CREDENTIAL_REPACK_ORIGIN = "https://your-worker.YOUR_SUBDOMAIN.workers.dev"
+
+# --- Staging ---
+[env.staging]
+name = "your-worker-staging"
+
+[[env.staging.d1_databases]]
+binding = "DB"
+database_name = "locus-db-staging"
+database_id = "REPLACE_WITH_STAGING_D1_UUID"
+
+[[env.staging.r2_buckets]]
+binding = "R2"
+bucket_name = "your-r2-bucket-staging"
+
+[[env.staging.kv_namespaces]]
+binding = "APP_KV"
+id = "REPLACE_WITH_STAGING_KV_ID"
+
+[[env.staging.send_email]]
+name = "SEND_EMAIL"
+allowed_sender_addresses = ["noreply@your-domain.example"]
+
+[[env.staging.routes]]
+pattern = "staging-api.your-domain.example"
+custom_domain = true
+
+[env.staging.vars]
+APP_ENV = "staging"
+SUPPORT_EMAIL = "support@example.com"
+TRANSACTIONAL_FROM_EMAIL = "noreply@your-domain.example"
+JWT_SECRET = "CHANGE_ME_NOT_FOR_PRODUCTION"
+JWT_EXPIRY = "7d"
+PASSWORD_RESET_ORIGIN = "https://staging.your-domain.example"
+PASSWORD_RESET_SECRET = "CHANGE_ME_PASSWORD_RESET"
+CORS_ORIGINS = "https://staging.your-domain.example"
+USAN_POLL_CREDENTIALS_MODE = "per_organization"
+USAN_POLL_NGEN_THROTTLE_MS = "10"
+NGEN_USAN_LIST_FP_CACHE = "1"
+USAN_LIST_INCREMENTAL_DAYS_BACK = "7"
+NGEN_SEARCH_PAGE_LENGTH = "100"
+ENABLE_POSR_STACK = "0"
+COOPERATIVE_LOCK_MS = "900000"
+TICKET_DETAIL_COOP_LOCK_MS = "120000"
+ENABLE_TICKET_RENEWAL = "0"
+GEOCODING_BIAS_BBOX = "-120.006,35.002,-114.04,42.002"
+NGEN_CREDENTIALS_KEY = "REPLACE_WITH_KEY_MATERIAL"
+NGEN_CREDENTIALS_KEY_OLD = ""
+NGEN_CREDENTIAL_REPACK_SECRET = "REPLACE_WITH_LONG_RANDOM"
+WORKER_ORIGIN = "https://staging-api.your-domain.example"
+CREDENTIAL_REPACK_ORIGIN = "https://your-worker-staging.YOUR_SUBDOMAIN.workers.dev"
+
+[[env.staging.workflows]]
+name = "submit-job-staging"
+binding = "SUBMIT_JOB_WORKFLOW"
+class_name = "SubmitJobWorkflow"
+
+# --- Core (UI + API on one Worker) ---
+[env.core]
+name = "corebe"
+
+[[env.core.d1_databases]]
+binding = "DB"
+database_name = "locus-db-core"
+database_id = "REPLACE_WITH_CORE_D1_UUID"
+
+[[env.core.r2_buckets]]
+binding = "R2"
+bucket_name = "your-r2-bucket-core"
+
+[[env.core.kv_namespaces]]
+binding = "APP_KV"
+id = "REPLACE_WITH_CORE_KV_ID"
+
+[[env.core.send_email]]
+name = "SEND_EMAIL"
+allowed_sender_addresses = ["noreply@your-domain.example"]
+
+[[env.core.routes]]
+pattern = "core-api.your-domain.example"
+custom_domain = true
+
+[[env.core.routes]]
+pattern = "core.your-domain.example"
+custom_domain = true
+
+[env.core.assets]
+directory = "../../frontend/dist"
+binding = "ASSETS"
+not_found_handling = "single-page-application"
+run_worker_first = true
+
+[env.core.vars]
+APP_ENV = "core"
+SUPPORT_EMAIL = "support@example.com"
+TRANSACTIONAL_FROM_EMAIL = "noreply@your-domain.example"
+JWT_SECRET = "CHANGE_ME_NOT_FOR_PRODUCTION"
+JWT_EXPIRY = "7d"
+PASSWORD_RESET_ORIGIN = "https://core.your-domain.example"
+PASSWORD_RESET_SECRET = "CHANGE_ME_PASSWORD_RESET"
+CORS_ORIGINS = "https://core.your-domain.example,https://core-api.your-domain.example"
+USAN_POLL_CREDENTIALS_MODE = "per_organization"
+USAN_POLL_NGEN_THROTTLE_MS = "10"
+NGEN_USAN_LIST_FP_CACHE = "1"
+USAN_LIST_INCREMENTAL_DAYS_BACK = "7"
+NGEN_SEARCH_PAGE_LENGTH = "100"
+ENABLE_POSR_STACK = "0"
+COOPERATIVE_LOCK_MS = "900000"
+TICKET_DETAIL_COOP_LOCK_MS = "120000"
+ENABLE_TICKET_RENEWAL = "0"
+GEOCODING_BIAS_BBOX = "-120.006,35.002,-114.04,42.002"
+NGEN_CREDENTIALS_KEY = "REPLACE_WITH_KEY_MATERIAL"
+NGEN_CREDENTIALS_KEY_OLD = ""
+NGEN_CREDENTIAL_REPACK_SECRET = "REPLACE_WITH_LONG_RANDOM"
+WORKER_ORIGIN = "https://core.your-domain.example"
+CREDENTIAL_REPACK_ORIGIN = "https://corebe.YOUR_SUBDOMAIN.workers.dev"
+
+[[env.core.workflows]]
+name = "submit-job-core"
+binding = "SUBMIT_JOB_WORKFLOW"
+class_name = "SubmitJobWorkflow"
