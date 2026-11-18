@@ -22,7 +22,7 @@
     "fast-xml-parser": "^5.7.1",
     "fflate": "^0.8.3",
     "hono": "^4.12.25",
-    "jose": "^5.9.6",
+    "jose": "^6.2.17",
     "set-cookie-parser": "^3.1.0"
   },
   "devDependencies": {
