@@ -12,36 +12,10 @@
     <title>Locus</title>
     <script>
     (function () {
-        var themes = ['default', 'glass', 'outline', 'ember', 'slate', 'blueprint', 'contractor', 'console', 'landoffice', 'modern'];
-        var clsPrefix = 'app-theme-';
-        function readStoredTheme() {
-            try {
-                var u = localStorage.getItem('currentUser');
-                if (u) {
-                    var user = JSON.parse(u);
-                    if (user && user.id) {
-                        var raw = localStorage.getItem('userProfile_user_' + user.id);
-                        if (raw) {
-                            var o = JSON.parse(raw);
-                            if (o && o.uiTheme && themes.indexOf(o.uiTheme) !== -1) return o.uiTheme;
-                        }
-                    }
-                }
-            } catch (e) {}
-            try {
-                var appUi = localStorage.getItem('appUiTheme');
-                if (appUi && themes.indexOf(appUi) !== -1) return appUi;
-            } catch (e1) {}
-            return null;
-        }
-        var params = new URLSearchParams(window.location.search);
-        var fromUrl = params.get('theme');
-        var t = (fromUrl && themes.indexOf(fromUrl) !== -1) ? fromUrl : readStoredTheme();
-        if (!t) t = 'default';
-        themes.forEach(function (name) {
-            document.documentElement.classList.remove(clsPrefix + name);
+        Array.prototype.slice.call(document.documentElement.classList).forEach(function (c) {
+            if (c.indexOf('app-theme-') === 0) document.documentElement.classList.remove(c);
         });
-        document.documentElement.classList.add(clsPrefix + t);
+        document.documentElement.classList.add('app-theme-default');
         var fontScales = ['compact', 'default', 'large', 'max'];
         function normalizeFontScale(value) {
             if (value === 'larger') return 'max';
@@ -589,22 +563,6 @@
                                 <option value="es">Spanish</option>
                             </select>
                             <p class="app-profile-hint">Applies to the map page. Spanish copy is pending native-speaker review.</p>
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label" for="profileUiTheme">UI design</label>
-                            <select id="profileUiTheme" class="form-select" onchange="if(window.applyAppTheme){applyAppTheme(this.value);}">
-                                <option value="default">Standard</option>
-                                <option value="glass">Frosted glass</option>
-                                <option value="outline">Outline minimal</option>
-                                <option value="ember">Ember (warm)</option>
-                                <option value="slate">Slate &amp; cyan</option>
-                                <option value="blueprint">Surveyor blueprint</option>
-                                <option value="contractor">Contractor block</option>
-                                <option value="console">Map console</option>
-                                <option value="landoffice">Land office</option>
-                                <option value="modern">Modern utility</option>
-                            </select>
-                            <p class="app-profile-hint">Change the feel of the app.</p>
                         </div>
                         <div class="form-group">
                             <label class="form-label" for="profileFontSize">Text size</label>

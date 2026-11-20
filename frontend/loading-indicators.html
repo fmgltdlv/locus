@@ -13,25 +13,10 @@
     <header class="loading-indicators-header">
         <h1>Loading indicator samples</h1>
         <p>
-            Eight theme-specific panel loaders using Core design tokens (<code>--app-accent</code>, borders, surfaces).
-            Each UI theme maps to one loader; the app remembers your theme on login and reload.
+            Panel loaders using Core design tokens (<code>--app-accent</code>, borders, surfaces).
+            The app uses the default theme loader (arc). Other samples below are for comparison.
         </p>
         <div class="loading-indicators-toolbar">
-            <label>
-                Theme
-                <select id="themeSelect" aria-label="Preview theme">
-                    <option value="app-theme-default">Default (dark)</option>
-                    <option value="app-theme-glass">Glass</option>
-                    <option value="app-theme-outline">Outline</option>
-                    <option value="app-theme-ember">Ember</option>
-                    <option value="app-theme-slate">Slate</option>
-                    <option value="app-theme-blueprint">Blueprint</option>
-                    <option value="app-theme-contractor">Contractor</option>
-                    <option value="app-theme-console">Console</option>
-                    <option value="app-theme-landoffice">Land Office</option>
-                    <option value="app-theme-modern">Modern</option>
-                </select>
-            </label>
             <label>
                 Size
                 <select id="sizeSelect" aria-label="Preview size">
@@ -46,8 +31,7 @@
     <section class="loading-indicators-theme-map" aria-labelledby="themeMapTitle">
         <h2 id="themeMapTitle">Theme assignment (production)</h2>
         <p class="loading-indicators-theme-map-intro">
-            When you change UI theme in Settings, panel loaders switch automatically. Your last theme is restored on reload and login.
-            Map boot overlay uses the dipole-field loader. Organization switch overlays follow the theme assignment.
+            Panel loaders use the default theme (arc). Map boot overlay uses the dipole-field loader.
         </p>
         <div class="loading-indicators-theme-map-preview" id="themeMapPreview" aria-live="polite">
             <div class="loading-indicators-theme-map-preview-stage" id="themeMapPreviewStage"></div>
@@ -73,7 +57,7 @@
             </div>
             <div>
                 <h2>1. Bar pulse wave</h2>
-                <p>Five bars scale in a left-to-right wave — assigned to <strong>Slate</strong> and <strong>Land Office</strong>.</p>
+                <p>Five bars scale in a left-to-right wave.</p>
             </div>
         </article>
 
@@ -86,7 +70,7 @@
             </div>
             <div>
                 <h2>2. Revolving dots</h2>
-                <p>Eight dots chase around a ring — assigned to <strong>Outline</strong> and <strong>Modern</strong>.</p>
+                <p>Eight dots chase around a ring.</p>
             </div>
         </article>
 
@@ -96,7 +80,7 @@
             </div>
             <div>
                 <h2>3. Dual ring counter-rotate</h2>
-                <p>Nested rings spin in opposite directions — assigned to <strong>Blueprint</strong>.</p>
+                <p>Nested rings spin in opposite directions.</p>
             </div>
         </article>
 
@@ -108,7 +92,7 @@
             </div>
             <div>
                 <h2>4. Orbit dots</h2>
-                <p>Pulsing center with orbiting satellites — assigned to <strong>Glass</strong>.</p>
+                <p>Pulsing center with orbiting satellites.</p>
             </div>
         </article>
 
@@ -130,7 +114,7 @@
             </div>
             <div>
                 <h2>6. Bouncing bars</h2>
-                <p>Five bars bounce vertically — assigned to <strong>Ember</strong>.</p>
+                <p>Five bars bounce vertically.</p>
             </div>
         </article>
 
@@ -142,7 +126,7 @@
             </div>
             <div>
                 <h2>7. DNA wave dots</h2>
-                <p>Six dots alternate in a sine wave — assigned to <strong>Console</strong>.</p>
+                <p>Six dots alternate in a sine wave.</p>
             </div>
         </article>
 
@@ -152,7 +136,7 @@
             </div>
             <div>
                 <h2>8. Morphing square</h2>
-                <p>Square morphs while rotating — assigned to <strong>Contractor</strong>.</p>
+                <p>Square morphs while rotating.</p>
             </div>
         </article>
     </main>
@@ -174,16 +158,7 @@
     <script>
         (function () {
             var THEME_LOADER_MAP = {
-                default: 'arc',
-                glass: 'orbit',
-                outline: 'dots-revolve',
-                ember: 'bar-bounce',
-                slate: 'bar-pulse',
-                blueprint: 'dual-ring',
-                contractor: 'morph-square',
-                console: 'dna',
-                landoffice: 'bar-pulse',
-                modern: 'dots-revolve'
+                default: 'arc'
             };
 
             var LOADER_SPANS = {
@@ -195,42 +170,14 @@
             };
 
             var THEME_LABELS = {
-                default: 'Default',
-                glass: 'Glass',
-                outline: 'Outline',
-                ember: 'Ember',
-                slate: 'Slate',
-                blueprint: 'Blueprint',
-                contractor: 'Contractor',
-                console: 'Console',
-                landoffice: 'Land Office',
-                modern: 'Modern'
+                default: 'Default'
             };
 
-            var root = document.documentElement;
-            var themeSelect = document.getElementById('themeSelect');
             var sizeSelect = document.getElementById('sizeSelect');
             var loaders = document.querySelectorAll('.ayw-loader');
             var themeMapBody = document.getElementById('themeMapBody');
             var themeMapPreviewStage = document.getElementById('themeMapPreviewStage');
             var themeMapPreviewLabel = document.getElementById('themeMapPreviewLabel');
-
-            var themes = [
-                'app-theme-default',
-                'app-theme-glass',
-                'app-theme-outline',
-                'app-theme-ember',
-                'app-theme-slate',
-                'app-theme-blueprint',
-                'app-theme-contractor',
-                'app-theme-console',
-                'app-theme-landoffice',
-                'app-theme-modern'
-            ];
-
-            function themeKeyFromClass(className) {
-                return className.replace('app-theme-', '');
-            }
 
             function buildLoaderHtml(variant) {
                 var spanCount = LOADER_SPANS[variant];
@@ -258,7 +205,7 @@
             }
 
             function updateThemePreview() {
-                var themeKey = themeKeyFromClass(themeSelect.value);
+                var themeKey = 'default';
                 var variant = THEME_LOADER_MAP[themeKey] || 'arc';
                 themeMapPreviewStage.innerHTML = buildLoaderHtml(variant);
                 themeMapPreviewLabel.textContent =
@@ -267,12 +214,6 @@
 
             renderThemeTable();
             updateThemePreview();
-
-            themeSelect.addEventListener('change', function () {
-                themes.forEach(function (t) { root.classList.remove(t); });
-                root.classList.add(themeSelect.value);
-                updateThemePreview();
-            });
 
             sizeSelect.addEventListener('change', function () {
                 var sizeClass = sizeSelect.value;

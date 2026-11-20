@@ -1,23 +1,14 @@
 // UI functions - Sidebar, modals, profile menu
 
-/** App UI designs (must match index.html theme ids and css/app-themes.css) */
-const APP_UI_THEMES = ['default', 'glass', 'outline', 'ember', 'slate', 'blueprint', 'contractor', 'console', 'landoffice', 'modern'];
+/** App UI designs (must match css/app-themes.css). Only the default theme is supported. */
+const APP_UI_THEMES = ['default'];
 
 /** Profile text size steps (must match index.html #profileFontSize and app-themes.css data-font-scale). */
 const APP_FONT_SCALES = ['compact', 'default', 'large', 'max'];
 
 /** Loader variant per UI theme (must match styles/partials/_12-loading-indicators.css). */
 const THEME_LOADER_MAP = {
-    default: 'arc',
-    glass: 'orbit',
-    outline: 'dots-revolve',
-    ember: 'bar-bounce',
-    slate: 'bar-pulse',
-    blueprint: 'dual-ring',
-    contractor: 'morph-square',
-    console: 'dna',
-    landoffice: 'bar-pulse',
-    modern: 'dots-revolve'
+    default: 'arc'
 };
 
 /** Variants that need inner span elements (count per variant). */
@@ -183,12 +174,10 @@ function applyAppTheme(name) {
         name = 'default';
     }
     const prefix = 'app-theme-';
-    APP_UI_THEMES.forEach(function (t) {
-        document.documentElement.classList.remove(prefix + t);
+    Array.prototype.slice.call(document.documentElement.classList).forEach(function (c) {
+        if (c.indexOf(prefix) === 0) document.documentElement.classList.remove(c);
     });
     document.documentElement.classList.add(prefix + name);
-    const sel = document.getElementById('profileUiTheme');
-    if (sel) sel.value = name;
     try {
         localStorage.setItem('appUiTheme', name);
         const storageKey = getUserStorageKey('userProfile');
@@ -689,8 +678,6 @@ async function loadProfile() {
         // Set personalization preferences
         ensureMapboxBasemapSelectOptions();
         const languageInput = document.getElementById('profileLanguage');
-        const uiTheme = document.getElementById('profileUiTheme');
-        if (uiTheme) uiTheme.value = profileData.uiTheme || 'default';
         const fontSize = document.getElementById('profileFontSize');
         if (fontSize) fontSize.value = getEffectiveFontSizeScale(profileData);
         const pinchEl = document.getElementById('profileAllowPinchZoom');
@@ -821,7 +808,7 @@ async function saveSettings() {
             name: document.getElementById('profileName')?.value || '',
             email: document.getElementById('profileEmail')?.value || '',
             userType: document.getElementById('profileUserType')?.dataset?.role || 'operator',
-            uiTheme: document.getElementById('profileUiTheme')?.value || 'default',
+            uiTheme: 'default',
             fontSizeScale: normalizeFontSizeScale(document.getElementById('profileFontSize')?.value),
             allowPinchZoom: (() => {
                 const el = document.getElementById('profileAllowPinchZoom');
